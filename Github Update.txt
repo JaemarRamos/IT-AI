@@ -1,0 +1,7 @@
+Your .gitignore already has .env so it's automatically protected. Just run:
+bashgit add .
+git status
+Check that .env is not in the list, then:
+bashgit commit -m "your update message"
+git push
+The .env file will never be pushed to GitHub as long as it's in .gitignore. ✅
