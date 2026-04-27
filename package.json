@@ -1,0 +1,19 @@
+{
+  "name": "it-genie",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^8.0.10"
+  },
+  "dependencies": {
+    "dompurify": "^3.4.1",
+    "marked": "^18.0.2",
+    "openai": "^6.34.0"
+  }
+}

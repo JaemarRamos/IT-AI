@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IT Genie 🧞</title>
+    <link rel="stylesheet" href="src/style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <header class="app-header">
+        <div class="title-group">
+          <img src="src/assets/genie.svg" alt="Genie" class="genie-icon-img" />
+          <h1>IT Genie</h1>
+        </div>
+        <div class="progress-group">
+          <span id="progress-label">Question 1 of 5</span>
+          <span id="score-label">Score: 0</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <section id="chat" class="chat-section"></section>
+
+        <div id="input-section" class="input-section">
+
+          <!-- Ready button shown BEFORE quiz starts -->
+          <div id="ready-section" class="ready-section">
+            <button id="ready-btn" class="submit-btn">
+              I'm ready, start the quiz! 🧞
+            </button>
+          </div>
+
+          <!-- Answer form shown DURING quiz (hidden at first) -->
+          <form id="quiz-form" class="quiz-form hidden">
+            <div class="input-wrapper">
+              <textarea
+                id="user-input"
+                placeholder="Type your answer here..."
+              ></textarea>
+            </div>
+            <button type="submit" id="submit-btn" class="submit-btn">
+              Submit
+            </button>
+          </form>
+
+        </div>
+
+        <div id="result-section" class="result-section hidden">
+          <div class="score-card">
+            <div id="final-score" class="final-score">0/5</div>
+            <div class="score-label">IT Policy Quiz Complete</div>
+          </div>
+          <button id="restart-btn" class="restart-btn">Start over</button>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
