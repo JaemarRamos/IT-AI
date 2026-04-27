@@ -100,6 +100,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const restartBtn = document.getElementById("restart-btn")
   const readySection = document.getElementById("ready-section")
   const readyBtn = document.getElementById("ready-btn")
+  const closeBtn = document.getElementById("close-btn")
+  const openBtn = document.getElementById("open-btn")
+  const sidebar = document.getElementById("sidebar")
 
   function addBubble(text, type) {
     const row = document.createElement("div")
@@ -251,5 +254,24 @@ readyBtn.addEventListener("click", async () => {
     askGenie("Please show me the IT policy.")
   })
 
+  closeBtn.addEventListener("click", () => {
+  sidebar.classList.add("closed")
+  openBtn.classList.remove("hidden")
+  })
+
+  openBtn.addEventListener("click", () => {
+  sidebar.classList.remove("closed")
+  openBtn.classList.add("hidden")
+  })
+
+// Module item selection
+document.querySelectorAll(".module-item").forEach(item => {
+  item.addEventListener("click", () => {
+    document.querySelectorAll(".module-item").forEach(i => i.classList.remove("active"))
+    item.classList.add("active")
+  })
+})
+  document.querySelector(".module-item").classList.add("active")
+  
   askGenie("Please show me the IT policy.")
 })
