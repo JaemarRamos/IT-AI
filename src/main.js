@@ -73,6 +73,8 @@ Rules:
 - Require the user to explain WHY, not just WHAT
 - Be encouraging but accurate in your feedback
 - Keep feedback brief and clear
+- Always start your feedback with "Correct!" if the answer is right
+- Always start your feedback with "Incorrect." if the answer is wrong
 - Track the score internally and mention it in the final summary
 - Format your final summary with markdown
 
@@ -205,39 +207,31 @@ function resetIdleTimer() {
     if (typing) typing.remove()
   }
 
-  async function askITMS(userMessage) {
+async function askITMS(userMessage) {
     messages.push({ role: "user", content: userMessage })
-
-    // Trim conversation before sending to avoid token limits
+    console.log("askITMS called, quizStarted:", quizStarted)
     trimMessages()
-
     addTypingIndicator()
 
-    try {
-      const response = await openai.chat.completions.create({
-        model: import.meta.env.VITE_GROQ_API_MODEL,
-        messages,
-      })
-
-      const reply = response.choices[0].message.content
+    function handleReply(reply) {
       messages.push({ role: "assistant", content: reply })
       removeTypingIndicator()
       addBubble(reply, "genie")
 
-      if (quizStarted) {
+      if (quizStarted && questionCount < 5) {
         questionCount++
-        progressLabel.textContent = `Question ${Math.min(questionCount, 5)} of 5`
-        progressFill.style.width = `${Math.min((questionCount / 5) * 100, 100)}%`
+        const isCorrect = /^correct|^that'?s right|^great|^well done|^yes,|^absolutely/i.test(reply.trim())
+        if (isCorrect) score++
+        progressLabel.textContent = `Question ${questionCount} of 5`
+        progressFill.style.width = `${(questionCount / 5) * 100}%`
+        scoreLabel.textContent = `Score: ${score}`
       }
 
       if (questionCount >= 5) {
         const scoreMatch = reply.match(/(\d)\s*out\s*of\s*5/i)
-        if (scoreMatch) {
-          score = parseInt(scoreMatch[1])
-        }
+        if (scoreMatch) score = parseInt(scoreMatch[1])
 
         const failed = reply.includes("RESULT: FAIL")
-
         if (failed) {
           setTimeout(() => {
             addBubble("Starting the quiz over. Good luck this time! 💪", "genie")
@@ -260,17 +254,35 @@ function resetIdleTimer() {
           }, 1000)
         }
       }
+    }
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: import.meta.env.VITE_GROQ_API_MODEL,
+        messages,
+      })
+      handleReply(response.choices[0].message.content)
 
     } catch (err) {
       removeTypingIndicator()
       console.error(err)
 
       if (err.status === 429) {
-        addBubble("⚠️ I'm receiving too many requests right now. Please wait 30 seconds and try again.", "genie")
-      } else if (err.status === 413 || err.message?.includes("context")) {
-        addBubble("⚠️ The conversation has gotten too long. Restarting to free up space...", "genie")
-        // Auto-trim and retry
-        messages.splice(1, Math.floor(messages.length / 2))
+        const fallbackModel = import.meta.env.VITE_GROQ_API_MODEL_FALLBACK
+        if (fallbackModel) {
+          addBubble("⚠️ Switching to backup model, please wait...", "genie")
+          try {
+            const retryResponse = await openai.chat.completions.create({
+              model: fallbackModel,
+              messages,
+            })
+            handleReply(retryResponse.choices[0].message.content)
+          } catch (retryErr) {
+            addBubble("⚠️ Both models are unavailable. Please try again later.", "genie")
+          }
+        } else {
+          addBubble("⚠️ Rate limit reached. Please wait a few minutes and try again.", "genie")
+        }
       } else if (err.status === 401) {
         addBubble("⚠️ API key error. Please check your .env file and restart.", "genie")
       } else if (err.status === 503 || err.status === 500) {
@@ -296,6 +308,7 @@ function resetIdleTimer() {
     quizForm.classList.remove("hidden")
     questionCount = 0
     quizStarted = true
+    console.log("quizStarted set to:", quizStarted)
     await askITMS("I have read the policy and I am ready to start the quiz!")
   })
 
