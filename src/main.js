@@ -67,7 +67,8 @@ If the user FAILS (3 or less out of 5):
 
 Rules:
 - Ask clear, specific questions about the do's and don'ts
-- Randomize questions every session
+- Randomize the questions each time the quiz is taken
+- Avoid yes/no questions, ask open-ended ones that require explanation
 - Use scenario-based open-ended questions
 - Require the user to explain WHY, not just WHAT
 - Be encouraging but accurate in your feedback
@@ -110,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const avatar = document.createElement("div")
     avatar.className = `avatar ${type === "user" ? "user" : "genie"}`
-    avatar.textContent = type === "user" ? "ME" : "🧞"
+    avatar.innerHTML = type === "user" ? "ME" : `<img src="src/assets/itms_baby/PNG/ITMS 32PX N.png" alt="ITMS" />`
 
     const bubble = document.createElement("div")
     bubble.className = `bubble ${type}`
@@ -141,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const avatar = document.createElement("div")
     avatar.className = "avatar genie"
-    avatar.textContent = "🧞"
+    avatar.innerHTML = `<img src="src/assets/itms_baby/PNG/ITMS 32PX N.png" alt="ITMS" />`
 
     const bubble = document.createElement("div")
     bubble.className = "bubble genie typing"
@@ -158,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (typing) typing.remove()
   }
 
-  async function askGenie(userMessage) {
+  async function askITMS(userMessage) {
     messages.push({ role: "user", content: userMessage })
     addTypingIndicator()
 
@@ -199,7 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
             scoreLabel.textContent = "Score: 0"
             quizForm.classList.add("hidden")
             readySection.classList.remove("hidden")
-            setTimeout(() => askGenie("Please show me the IT policy."), 1500)
+            setTimeout(() => askITMS("Please show me the IT policy."), 1500)
           }, 2000)
         } else {
           setTimeout(() => {
@@ -222,7 +223,7 @@ readyBtn.addEventListener("click", async () => {
   readySection.classList.add("hidden")
   quizForm.classList.remove("hidden")
   questionCount = 0
-  await askGenie("I have read the policy and I am ready to start the quiz!")
+  await askITMS("I have read the policy and I am ready to start the quiz!")
   quizStarted = true 
 })
 
@@ -234,7 +235,7 @@ readyBtn.addEventListener("click", async () => {
     addBubble(userMessage, "user")
     userInput.value = ""
     document.getElementById("submit-btn").disabled = true
-    await askGenie(userMessage)
+    await askITMS(userMessage)
     document.getElementById("submit-btn").disabled = false
   })
 
@@ -251,7 +252,7 @@ readyBtn.addEventListener("click", async () => {
     resultSection.classList.add("hidden")
     quizForm.classList.add("hidden")
     readySection.classList.remove("hidden")
-    askGenie("Please show me the IT policy.")
+    askITMS("Please show me the IT policy.")
   })
 
   closeBtn.addEventListener("click", () => {
@@ -273,5 +274,5 @@ document.querySelectorAll(".module-item").forEach(item => {
 })
   document.querySelector(".module-item").classList.add("active")
   
-  askGenie("Please show me the IT policy.")
+  askITMS("Please show me the IT policy.")
 })
