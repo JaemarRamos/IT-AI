@@ -651,6 +651,57 @@ textarea::placeholder {
 }
 
 /* ==========================================================================
+   Blur Overlay — shows when user switches tabs during quiz
+   ========================================================================== */
+
+#blur-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 17, 23, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+#blur-overlay.visible {
+  display: flex;
+}
+
+.blur-message {
+  text-align: center;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: rgba(19, 22, 31, 0.95);
+  border-radius: 12px;
+  padding: 2.5rem 3.5rem;
+  box-shadow: 0 0 60px rgba(59, 130, 246, 0.1);
+}
+
+.blur-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.blur-message p {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.blur-message small {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
    Utilities
    ========================================================================== */
 
@@ -681,3 +732,4 @@ textarea::placeholder {
   h1 { font-size: 14px; }
   .bubble { font-size: 12px; }
 }
+

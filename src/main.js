@@ -36,7 +36,7 @@ DON'TS:
 - Never store sensitive company data on personal devices or cloud storage
 `
 
-const SYSTEM_PROMPT = `You are IT Genie, an IT policy quiz assistant.
+const SYSTEM_PROMPT = `You are IT artificial intelligence, an IT policy quiz assistant.
 
 Your job has two phases:
 
@@ -85,7 +85,22 @@ const messages = [
 
 let questionCount = 0
 let score = 0
-let quizStarted = false  
+let quizStarted = false
+let idleTimer = null
+const IDLE_LIMIT = 60000 
+
+window.onblur = () => {
+  const quizForm = document.getElementById("quiz-form")
+  const overlay = document.getElementById("blur-overlay")
+  if (!quizForm || quizForm.classList.contains("hidden")) return
+  
+  overlay.style.cssText = "display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,17,23,0.85); backdrop-filter: blur(12px); z-index: 9999; align-items: center; justify-content: center; flex-direction: column;"
+}
+
+window.onfocus = () => {
+  const overlay = document.getElementById("blur-overlay")
+  if (overlay) overlay.style.cssText = "display: none;"
+}
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -104,6 +119,37 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeBtn = document.getElementById("close-btn")
   const openBtn = document.getElementById("open-btn")
   const sidebar = document.getElementById("sidebar")
+
+function resetIdleTimer() {
+  clearTimeout(idleTimer)
+  if (!quizStarted) return 
+
+  idleTimer = setTimeout(() => {
+    const userMessage = userInput.value.trim()
+
+    if (userMessage) {
+      addBubble(userMessage, "user")
+      userInput.value = ""
+      document.getElementById("submit-btn").disabled = true
+      askITMS(userMessage).then(() => {
+        document.getElementById("submit-btn").disabled = false
+      })
+    } else {
+      addBubble("⏱️ Time's up! No answer was submitted.", "user")
+      document.getElementById("submit-btn").disabled = true
+      askITMS("The user ran out of time and did not answer this question. Mark it as incorrect and move on.").then(() => {
+        document.getElementById("submit-btn").disabled = false
+      })
+    }
+  }, IDLE_LIMIT)
+}
+
+  function trimMessages() {
+    // Keep system prompt (index 0) + last 6 messages only
+    if (messages.length > 7) {
+      messages.splice(1, messages.length - 7)
+    }
+  }
 
   function addBubble(text, type) {
     const row = document.createElement("div")
@@ -161,6 +207,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function askITMS(userMessage) {
     messages.push({ role: "user", content: userMessage })
+
+    // Trim conversation before sending to avoid token limits
+    trimMessages()
+
     addTypingIndicator()
 
     try {
@@ -175,10 +225,10 @@ document.addEventListener("DOMContentLoaded", () => {
       addBubble(reply, "genie")
 
       if (quizStarted) {
-            questionCount++
-            progressLabel.textContent = `Question ${Math.min(questionCount, 5)} of 5`
-            progressFill.style.width = `${Math.min((questionCount / 5) * 100, 100)}%`
-          }
+        questionCount++
+        progressLabel.textContent = `Question ${Math.min(questionCount, 5)} of 5`
+        progressFill.style.width = `${Math.min((questionCount / 5) * 100, 100)}%`
+      }
 
       if (questionCount >= 5) {
         const scoreMatch = reply.match(/(\d)\s*out\s*of\s*5/i)
@@ -214,18 +264,40 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) {
       removeTypingIndicator()
       console.error(err)
-      addBubble("Sorry, something went wrong. Please try again.", "genie")
+
+      if (err.status === 429) {
+        addBubble("⚠️ I'm receiving too many requests right now. Please wait 30 seconds and try again.", "genie")
+      } else if (err.status === 413 || err.message?.includes("context")) {
+        addBubble("⚠️ The conversation has gotten too long. Restarting to free up space...", "genie")
+        // Auto-trim and retry
+        messages.splice(1, Math.floor(messages.length / 2))
+      } else if (err.status === 401) {
+        addBubble("⚠️ API key error. Please check your .env file and restart.", "genie")
+      } else if (err.status === 503 || err.status === 500) {
+        addBubble("⚠️ The AI service is temporarily unavailable. Please try again in a moment.", "genie")
+      } else {
+        addBubble("⚠️ Something went wrong. Please try again.", "genie")
+      }
     }
   }
 
-readyBtn.addEventListener("click", async () => {
-  chat.innerHTML = ""
-  readySection.classList.add("hidden")
-  quizForm.classList.remove("hidden")
-  questionCount = 0
-  await askITMS("I have read the policy and I am ready to start the quiz!")
-  quizStarted = true 
-})
+  // Event listeners
+
+  userInput.addEventListener("copy", (e) => e.preventDefault())
+  userInput.addEventListener("paste", (e) => e.preventDefault())
+  userInput.addEventListener("cut", (e) => e.preventDefault())
+  userInput.addEventListener("keydown", resetIdleTimer)
+  userInput.addEventListener("click", resetIdleTimer)
+  document.addEventListener("mousemove", resetIdleTimer)
+
+  readyBtn.addEventListener("click", async () => {
+    chat.innerHTML = ""
+    readySection.classList.add("hidden")
+    quizForm.classList.remove("hidden")
+    questionCount = 0
+    quizStarted = true
+    await askITMS("I have read the policy and I am ready to start the quiz!")
+  })
 
   quizForm.addEventListener("submit", async (e) => {
     e.preventDefault()
@@ -256,23 +328,23 @@ readyBtn.addEventListener("click", async () => {
   })
 
   closeBtn.addEventListener("click", () => {
-  sidebar.classList.add("closed")
-  openBtn.classList.remove("hidden")
+    sidebar.classList.add("closed")
+    openBtn.classList.remove("hidden")
   })
 
   openBtn.addEventListener("click", () => {
-  sidebar.classList.remove("closed")
-  openBtn.classList.add("hidden")
+    sidebar.classList.remove("closed")
+    openBtn.classList.add("hidden")
   })
 
-// Module item selection
-document.querySelectorAll(".module-item").forEach(item => {
-  item.addEventListener("click", () => {
-    document.querySelectorAll(".module-item").forEach(i => i.classList.remove("active"))
-    item.classList.add("active")
+  document.querySelectorAll(".module-item").forEach(item => {
+    item.addEventListener("click", () => {
+      document.querySelectorAll(".module-item").forEach(i => i.classList.remove("active"))
+      item.classList.add("active")
+    })
   })
-})
+
   document.querySelector(".module-item").classList.add("active")
-  
+
   askITMS("Please show me the IT policy.")
 })
