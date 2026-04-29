@@ -4,6 +4,10 @@ import { marked } from "marked"
 import DOMPurify from "dompurify"
 import { checkEnvironment } from "./utils.js"
 
+  if (!sessionStorage.getItem("loggedIn")) {
+    window.location.href = "login.html"
+  }
+
 checkEnvironment()
 
 const openai = new OpenAI({

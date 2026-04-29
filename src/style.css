@@ -26,12 +26,13 @@
   margin: 0;
   padding: 0;
   user-select: none;
+  
 }
 
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   line-height: 1.6;
   overflow: hidden;
   height: 100vh;
