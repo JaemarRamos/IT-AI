@@ -37,8 +37,3 @@ loginBtn.addEventListener("click", async () => {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Enter") loginBtn.click()
 })
-
-document.getElementById("login-btn").addEventListener("click", () => {
-  sessionStorage.setItem("loggedIn", "true")
-  window.location.href = "index.html"
-})
