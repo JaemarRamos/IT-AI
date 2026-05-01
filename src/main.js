@@ -164,7 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const avatar = document.createElement("div")
     avatar.className = `avatar ${type === "user" ? "user" : "genie"}`
-    avatar.innerHTML = type === "user" ? "ME" : `<img src="public/itms_baby/PNG/ITMS 32PX N.png" alt="ITMS" />`
+    avatar.innerHTML = type === "user" ? "ME" : `<img src="/itms_baby/PNG/ITMS 32PX N.png" alt="ITMS" />`
 
     const bubble = document.createElement("div")
     bubble.className = `bubble ${type}`
@@ -195,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const avatar = document.createElement("div")
     avatar.className = "avatar genie"
-    avatar.innerHTML = `<img src="public/itms_baby/PNG/ITMS 32PX N.png" alt="ITMS" />`
+    avatar.innerHTML = `<img src="/itms_baby/PNG/ITMS 32PX N.png" alt="ITMS" />`
 
     const bubble = document.createElement("div")
     bubble.className = "bubble genie typing"
