@@ -4,9 +4,9 @@ import { marked } from "marked"
 import DOMPurify from "dompurify"
 import { checkEnvironment } from "./utils.js"
 
-  if (!sessionStorage.getItem("loggedIn")) {
-    window.location.href = "login.html"
-  }
+if (!sessionStorage.getItem("loggedIn")) {
+  window.location.href = "login.html"
+}
 
 checkEnvironment()
 
@@ -40,7 +40,9 @@ DON'TS:
 - Never store sensitive company data on personal devices or cloud storage
 `
 
-const SYSTEM_PROMPT = `You are IT artificial intelligence, an IT policy quiz assistant.
+// Build system prompt from policy text
+function buildSystemPrompt(policy) {
+  return `You are IT artificial intelligence, an IT policy quiz assistant.
 
 Your job has two phases:
 
@@ -83,23 +85,24 @@ Rules:
 - Format your final summary with markdown
 
 Here is the IT policy to show and quiz about:
-${IT_POLICY}`
-
-const messages = [
-  { role: "system", content: SYSTEM_PROMPT }
-]
+${policy}`
+}
 
 let questionCount = 0
 let score = 0
 let quizStarted = false
 let idleTimer = null
-const IDLE_LIMIT = 60000 
+let currentPolicy = IT_POLICY
+const IDLE_LIMIT = 60000
+
+const messages = [
+  { role: "system", content: buildSystemPrompt(currentPolicy) }
+]
 
 window.onblur = () => {
   const quizForm = document.getElementById("quiz-form")
   const overlay = document.getElementById("blur-overlay")
   if (!quizForm || quizForm.classList.contains("hidden")) return
-  
   overlay.style.cssText = "display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,17,23,0.85); backdrop-filter: blur(12px); z-index: 9999; align-items: center; justify-content: center; flex-direction: column;"
 }
 
@@ -125,33 +128,31 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeBtn = document.getElementById("close-btn")
   const openBtn = document.getElementById("open-btn")
   const sidebar = document.getElementById("sidebar")
+  const uploadDocBtn = document.querySelector(".upload-doc-btn")
 
-function resetIdleTimer() {
-  clearTimeout(idleTimer)
-  if (!quizStarted) return 
-
-  idleTimer = setTimeout(() => {
-    const userMessage = userInput.value.trim()
-
-    if (userMessage) {
-      addBubble(userMessage, "user")
-      userInput.value = ""
-      document.getElementById("submit-btn").disabled = true
-      askITMS(userMessage).then(() => {
-        document.getElementById("submit-btn").disabled = false
-      })
-    } else {
-      addBubble("⏱️ Time's up! No answer was submitted.", "user")
-      document.getElementById("submit-btn").disabled = true
-      askITMS("The user ran out of time and did not answer this question. Mark it as incorrect and move on.").then(() => {
-        document.getElementById("submit-btn").disabled = false
-      })
-    }
-  }, IDLE_LIMIT)
-}
+  function resetIdleTimer() {
+    clearTimeout(idleTimer)
+    if (!quizStarted) return
+    idleTimer = setTimeout(() => {
+      const userMessage = userInput.value.trim()
+      if (userMessage) {
+        addBubble(userMessage, "user")
+        userInput.value = ""
+        document.getElementById("submit-btn").disabled = true
+        askITMS(userMessage).then(() => {
+          document.getElementById("submit-btn").disabled = false
+        })
+      } else {
+        addBubble("⏱️ Time's up! No answer was submitted.", "user")
+        document.getElementById("submit-btn").disabled = true
+        askITMS("The user ran out of time and did not answer this question. Mark it as incorrect and move on.").then(() => {
+          document.getElementById("submit-btn").disabled = false
+        })
+      }
+    }, IDLE_LIMIT)
+  }
 
   function trimMessages() {
-    // Keep system prompt (index 0) + last 6 messages only
     if (messages.length > 7) {
       messages.splice(1, messages.length - 7)
     }
@@ -211,9 +212,8 @@ function resetIdleTimer() {
     if (typing) typing.remove()
   }
 
-async function askITMS(userMessage) {
+  async function askITMS(userMessage) {
     messages.push({ role: "user", content: userMessage })
-    console.log("askITMS called, quizStarted:", quizStarted)
     trimMessages()
     addTypingIndicator()
 
@@ -236,10 +236,12 @@ async function askITMS(userMessage) {
         if (scoreMatch) score = parseInt(scoreMatch[1])
 
         const failed = reply.includes("RESULT: FAIL")
+
         if (failed) {
           setTimeout(() => {
             addBubble("Starting the quiz over. Good luck this time! 💪", "genie")
-            messages.length = 1
+            messages.length = 0
+            messages.push({ role: "system", content: buildSystemPrompt(currentPolicy) })
             questionCount = 0
             score = 0
             quizStarted = false
@@ -298,7 +300,6 @@ async function askITMS(userMessage) {
   }
 
   // Event listeners
-
   userInput.addEventListener("copy", (e) => e.preventDefault())
   userInput.addEventListener("paste", (e) => e.preventDefault())
   userInput.addEventListener("cut", (e) => e.preventDefault())
@@ -312,7 +313,6 @@ async function askITMS(userMessage) {
     quizForm.classList.remove("hidden")
     questionCount = 0
     quizStarted = true
-    console.log("quizStarted set to:", quizStarted)
     await askITMS("I have read the policy and I am ready to start the quiz!")
   })
 
@@ -320,7 +320,6 @@ async function askITMS(userMessage) {
     e.preventDefault()
     const userMessage = userInput.value.trim()
     if (!userMessage) return
-
     addBubble(userMessage, "user")
     userInput.value = ""
     document.getElementById("submit-btn").disabled = true
@@ -330,7 +329,8 @@ async function askITMS(userMessage) {
 
   restartBtn.addEventListener("click", () => {
     quizStarted = false
-    messages.length = 1
+    messages.length = 0
+    messages.push({ role: "system", content: buildSystemPrompt(currentPolicy) })
     questionCount = 0
     score = 0
     chat.innerHTML = ""
@@ -361,7 +361,60 @@ async function askITMS(userMessage) {
     })
   })
 
-  document.querySelector(".module-item").classList.add("active")
+  // Handle PDF upload
+  uploadDocBtn.addEventListener("click", () => {
+    const fileInput = document.createElement("input")
+    fileInput.type = "file"
+    fileInput.accept = ".pdf"
+    fileInput.click()
 
+    fileInput.addEventListener("change", async (e) => {
+      const file = e.target.files[0]
+      if (!file) return
+
+      const activeModule = document.querySelector(".module-item.active .module-name")?.textContent || "General"
+
+      addBubble(`📄 Uploading "${file.name}"...`, "genie")
+
+      try {
+        const { extractPDFText, uploadPolicy } = await import('./supabase.js')
+
+        addBubble("Reading PDF content...", "genie")
+        const policyText = await extractPDFText(file)
+
+        await uploadPolicy(file, activeModule)
+
+        // Save new policy and update system prompt
+        currentPolicy = policyText
+        messages[0] = {
+          role: "system",
+          content: buildSystemPrompt(currentPolicy)
+        }
+
+        addBubble(`✅ "${file.name}" uploaded! The quiz will now be based on this policy.`, "genie")
+
+        // Reset quiz state
+        messages.length = 0
+        messages.push({ role: "system", content: buildSystemPrompt(currentPolicy) })
+        questionCount = 0
+        score = 0
+        quizStarted = false
+        progressFill.style.width = "0%"
+        progressLabel.textContent = "Question 1 of 5"
+        scoreLabel.textContent = "Score: 0"
+        quizForm.classList.add("hidden")
+        readySection.classList.remove("hidden")
+        chat.innerHTML = ""
+
+        askITMS("Please show me the uploaded IT policy.")
+
+      } catch (err) {
+        console.error(err)
+        addBubble("❌ Failed to upload PDF. Please try again.", "genie")
+      }
+    })
+  })
+
+  document.querySelector(".module-item").classList.add("active")
   askITMS("Please show me the IT policy.")
 })

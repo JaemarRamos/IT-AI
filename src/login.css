@@ -1,6 +1,6 @@
-/* ==========================================================================
+/* 
    Login Page
-   ========================================================================== */
+*/
 
 .login-body {
   overflow: auto;
@@ -169,4 +169,13 @@
   margin-top: 1.5rem;
   font-size: 11px;
   color: rgba(255, 255, 255, 0.2);
+}
+
+
+#error-msg {
+  color: #fca5a5; 
+  font-size: 12px; 
+  text-align: center; 
+  margin-bottom: 0.5rem; 
+  min-height: 18px;
 }
