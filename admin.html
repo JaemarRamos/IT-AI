@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ITMS — Admin</title>
+    <link rel="stylesheet" href="src/style.css" />
+  </head>
+  <body class="login-body">
+    <div class="login-page">
+      <div class="glow-orb"></div>
+      <div class="glow-orb2"></div>
+
+      <div class="login-card" style="max-width: 480px;">
+        <div class="login-logo">
+          <div class="logo-icon">
+            <img src="src/assets/genie.svg" alt="ITMS" width="28" />
+          </div>
+          <div class="logo-title">Create Employee</div>
+          <div class="logo-sub">Admin Panel</div>
+        </div>
+
+        <div class="login-divider"></div>
+
+        <div class="form-group">
+          <label class="form-label">Employee ID</label>
+          <input class="form-input" type="text" id="employee-id" placeholder="e.g. 10001" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input class="form-input" type="text" id="full-name" placeholder="Juan Dela Cruz" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input class="form-input" type="email" id="email" placeholder="juan@company.com" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="password" placeholder="••••••••" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <div class="select-wrapper">
+            <select class="role-select" id="role">
+              <option value="employee">Employee</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+
+        <p id="error-msg" style="color: #fca5a5; font-size: 12px; text-align: center; margin-bottom: 0.5rem; min-height: 18px;"></p>
+        <p id="success-msg" style="color: #86efac; font-size: 12px; text-align: center; margin-bottom: 0.5rem; min-height: 18px;"></p>
+
+        <button class="login-btn" id="create-btn">Create Employee</button>
+
+        <div class="login-footer">
+          <a href="index.html" style="color: rgba(147,197,253,0.5); text-decoration: none; font-size: 12px;">← Back to Quiz</a>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="src/admin.js"></script>
+  </body>
+</html>

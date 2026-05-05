@@ -6,10 +6,10 @@ const passwordInput = document.getElementById("password")
 const errorMsg = document.getElementById("error-msg")
 
 loginBtn.addEventListener("click", async () => {
-  const email = emailInput.value.trim()
+  const input = emailInput.value.trim()
   const password = passwordInput.value.trim()
 
-  if (!email || !password) {
+  if (!input || !password) {
     errorMsg.textContent = "Please fill in all fields."
     return
   }
@@ -17,9 +17,12 @@ loginBtn.addEventListener("click", async () => {
   loginBtn.textContent = "Signing in..."
   loginBtn.disabled = true
 
+  // If input contains @ it's an email (admin), otherwise convert ID to email
+  const email = input.includes("@") ? input : `${input}@itms.internal`
+
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
-    password
+    password,
   })
 
   if (error) {
@@ -30,6 +33,7 @@ loginBtn.addEventListener("click", async () => {
   }
 
   sessionStorage.setItem("loggedIn", "true")
+  sessionStorage.setItem("employeeId", input)
   sessionStorage.setItem("user", JSON.stringify(data.user))
   window.location.href = "index.html"
 })

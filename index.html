@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script src="/src/auth.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ITMS</title>
     <link rel="stylesheet" href="src/style.css" />
@@ -41,12 +42,13 @@
             <span class="module-name">Remote Work</span>
             <span class="module-badge">5 Q</span>
           </div>
+          <div id="uploaded-modules" class="uploaded-modules"></div>
         </div>
 
         <div class="sidebar-section">
           <div class="section-label">Upload Policy</div>
           <button class="upload-doc-btn">&#x2B06; Upload document</button>
-          <div class="upload-hint">PDF, DOCX, TXT supported</div>
+          <div class="upload-hint">PDF supported</div>
         </div>
 
         <div class="sidebar-footer">
@@ -65,6 +67,7 @@
               <div class="header-sub">Security protocol quiz</div>
             </div>
           </div>
+          <a href="admin.html" id="admin-link" class="admin-link hidden">⚙ Admin</a>
           <div class="progress-group">
             <span id="progress-label">Question 1 of 5</span>
             <span id="score-label">Score: 0</span>
@@ -76,6 +79,10 @@
 
         <main class="main-content">
           <section id="chat" class="chat-section"></section>
+
+        <div id="pdf-viewer" class="pdf-viewer hidden">
+          <iframe id="pdf-frame" src="" type="application/pdf"></iframe>
+        </div>
 
           <div id="input-section" class="input-section">
             <div id="ready-section" class="ready-section">

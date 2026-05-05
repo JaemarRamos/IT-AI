@@ -5,12 +5,33 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Upload PDF to Supabase Storage
-export async function uploadPolicy(file, moduleName) {
-  const user = supabase.auth.getUser()
+export async function uploadPolicy(file, moduleName, policyText) {
+  const { data: existing } = await supabase
+    .from('policies')
+    .select('id, file_url')
+    .eq('file_name', file.name)
+    .single()
+
+    console.log("Existing:", existing, "Error:", checkError)
+
+  if (existing) {
+    const { error: updateError } = await supabase
+      .from('policies')
+      .update({
+        module_name: moduleName,
+        policy_text: policyText,
+        is_active: true
+      })
+      .eq('id', existing.id)
+
+    if (updateError) throw updateError
+
+    return existing.file_url
+  }
+
   const fileName = `${Date.now()}_${file.name}`
 
-  const { data: storageData, error: storageError } = await supabase.storage
+  const { error: storageError } = await supabase.storage
     .from('policies')
     .upload(fileName, file)
 
@@ -26,6 +47,7 @@ export async function uploadPolicy(file, moduleName) {
       file_name: file.name,
       file_url: urlData.publicUrl,
       module_name: moduleName,
+      policy_text: policyText,
       uploaded_by: (await supabase.auth.getUser()).data.user?.email,
       is_active: true
     })
@@ -52,4 +74,61 @@ export async function extractPDFText(file) {
   }
 
   return fullText
+}
+
+export async function createEmployee(employeeId, password, fullName, email, role = 'employee') {
+  const fakeEmail = `${employeeId}@itms.internal`
+
+  const { data, error: authError } = await supabase.auth.signUp({
+    email: fakeEmail,
+    password: password,
+  })
+
+  if (authError) throw authError
+  if (!data.user) throw new Error("Failed to create user")
+
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .insert({
+      id: data.user.id,
+      employee_id: employeeId,
+      full_name: fullName,
+      email: email,
+      role: role
+    })
+
+  if (profileError) throw profileError
+
+  return data.user
+}
+
+export async function saveQuizResult(email, employeeId, moduleName, score, totalQuestions, passed) {
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  const { error } = await supabase
+    .from('quiz_results')
+    .insert({
+      user_id: user?.id,
+      employee_id: employeeId,
+      full_name: email,
+      module_name: moduleName,
+      score: score,
+      passed: passed
+    })
+
+  if (error) throw error
+}
+
+export async function getPassedModules() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { data, error } = await supabase
+    .from('quiz_results')
+    .select('module_name')
+    .eq('user_id', user.id)
+    .eq('passed', true)
+
+  if (error) return []
+  return data.map(r => r.module_name)
 }

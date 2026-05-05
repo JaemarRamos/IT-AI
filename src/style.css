@@ -77,6 +77,43 @@ body {
 }
 
 /*
+  PDF Viewer
+ */
+
+.pdf-viewer {
+  width: 100%;
+  height: 80vh; 
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.pdf-viewer iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.uploaded-modules {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.module-item .edit-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--accent-primary);
+  color: var(--text-primary);
+  font-size: inherit;
+  font-family: inherit;
+  width: 100%;
+  outline: none;
+}
+
+/*
    Sidebar
 */
 
@@ -205,6 +242,8 @@ body {
   color: rgba(147, 197, 253, 0.5);
   border-radius: 3px;
   border: 1px solid rgba(59, 130, 246, 0.15);
+  white-space: nowrap; 
+  flex-shrink: 0;      
 }
 
 .upload-doc-btn {
@@ -602,6 +641,26 @@ textarea::placeholder {
    Result Section
 */
 
+.module-item.passed {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.module-item.passed .module-dot {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+}
+
+.module-item.passed .module-name {
+  color: #86efac;
+}
+
+.module-item.passed .module-badge {
+  background: rgba(34, 197, 94, 0.1);
+  color: #86efac;
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
 .result-section {
   text-align: center;
   padding: 2rem 0;
@@ -734,3 +793,44 @@ textarea::placeholder {
   .bubble { font-size: 12px; }
 }
 
+/* 
+    Admin Link in Header
+*/
+
+.admin-link {
+  font-size: 12px;
+  color: rgba(147, 197, 253, 0.6);
+  text-decoration: none;
+  padding: 4px 10px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 6px;
+  margin-left: auto;
+  transition: all 0.2s;
+}
+
+.admin-link:hover {
+  color: var(--blue-light);
+  border-color: rgba(59, 130, 246, 0.4);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+/* 
+    Logout Button
+*/
+
+.logout-btn {
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fca5a5;
+  border: 0.5px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--border-radius-md);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.5);
+}
