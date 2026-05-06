@@ -39,12 +39,11 @@ loginBtn.addEventListener("click", async () => {
   sessionStorage.setItem("employeeId", profile?.employee_id || input)
   sessionStorage.setItem("user", JSON.stringify({
     id: data.user.id,
-    email: profile?.email || email,        // real email
-    name: profile?.full_name || input,     // real full name
+    email: profile?.email || email,
+    name: profile?.full_name || input,
     role: profile?.role || "employee",
-    authEmail: email                        // keep auth email for admin check
+    authEmail: email
   }))
-
   window.location.href = "index.html"
 })
 
