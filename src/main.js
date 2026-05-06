@@ -3,19 +3,25 @@ import { marked } from "marked"
 import DOMPurify from "dompurify"
 import { checkEnvironment } from "./utils.js"
 
-// Auth check
+// ─── Auth check ───────────────────────────────────────────────
 if (!sessionStorage.getItem("loggedIn")) {
   window.location.href = "/login.html"
 }
 
 checkEnvironment()
 
+// ─── Admin flag ───────────────────────────────────────────────
+const currentUser = JSON.parse(sessionStorage.getItem("user") || "{}")
+const isAdmin = Boolean(currentUser?.email?.includes("admin"))
+
+// ─── AI client ────────────────────────────────────────────────
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_GROQ_API_KEY,
   baseURL: import.meta.env.VITE_GROQ_API_URL,
   dangerouslyAllowBrowser: true,
 })
 
+// ─── Built-in policy ──────────────────────────────────────────
 const IT_POLICY = `
 COMPANY IT POLICY - DO'S AND DON'TS
 
@@ -40,17 +46,18 @@ DON'TS:
 - Never store sensitive company data on personal devices or cloud storage
 `
 
-// Constants
-const TOTAL_QUESTIONS = 5 // change to 25 in production
-const IDLE_LIMIT = 60000
+// ─── Constants ────────────────────────────────────────────────
+const TOTAL_QUESTIONS = 5   // change to 25 in production
+const IDLE_LIMIT      = 60000
 
-// State
-let questionCount = 0
-let score = 0
-let quizStarted = false
-let idleTimer = null
-let currentPolicy = IT_POLICY
+// ─── State ────────────────────────────────────────────────────
+let questionCount  = 0
+let score          = 0
+let quizStarted    = false
+let idleTimer      = null
+let currentPolicy  = IT_POLICY
 
+// ─── System prompt builder ────────────────────────────────────
 function buildSystemPrompt(policy) {
   return `You are an IT policy quiz assistant.
 
@@ -89,48 +96,85 @@ const messages = [
   { role: "system", content: buildSystemPrompt(currentPolicy) }
 ]
 
-// Show admin link if admin
-const currentUser = JSON.parse(sessionStorage.getItem("user") || "{}")
+// ─── Show admin link ──────────────────────────────────────────
 const adminLink = document.getElementById("admin-link")
-if (currentUser?.email?.includes("admin")) {
-  adminLink?.classList.remove("hidden")
-}
+if (isAdmin) adminLink?.classList.remove("hidden")
 
-// Blur when window loses focus during quiz
+// ─── Blur on tab switch during quiz ──────────────────────────
 window.onblur = () => {
   const quizForm = document.getElementById("quiz-form")
-  const overlay = document.getElementById("blur-overlay")
+  const overlay  = document.getElementById("blur-overlay")
   if (!quizForm || quizForm.classList.contains("hidden")) return
-  overlay.style.cssText = "display: flex !important; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,17,23,0.85); backdrop-filter: blur(12px); z-index: 9999; align-items: center; justify-content: center; flex-direction: column;"
+  overlay.style.cssText = "display:flex!important;position:fixed;inset:0;background:rgba(245,243,239,0.88);backdrop-filter:blur(16px);z-index:9999;align-items:center;justify-content:center;"
 }
-
 window.onfocus = () => {
   const overlay = document.getElementById("blur-overlay")
-  if (overlay) overlay.style.cssText = "display: none;"
+  if (overlay) overlay.style.cssText = "display:none;"
 }
 
+// ══════════════════════════════════════════════════════════════
 document.addEventListener("DOMContentLoaded", () => {
-  // DOM elements
-  const chat = document.getElementById("chat")
-  const userInput = document.getElementById("user-input")
-  const quizForm = document.getElementById("quiz-form")
-  const inputSection = document.getElementById("input-section")
-  const resultSection = document.getElementById("result-section")
-  const progressFill = document.getElementById("progress-fill")
-  const progressLabel = document.getElementById("progress-label")
-  const scoreLabel = document.getElementById("score-label")
-  const finalScore = document.getElementById("final-score")
-  const restartBtn = document.getElementById("restart-btn")
-  const readySection = document.getElementById("ready-section")
-  const readyBtn = document.getElementById("ready-btn")
-  const closeBtn = document.getElementById("close-btn")
-  const openBtn = document.getElementById("open-btn")
-  const sidebar = document.getElementById("sidebar")
-  const uploadDocBtn = document.querySelector(".upload-doc-btn")
-  const pdfViewer = document.getElementById("pdf-viewer")
-  const pdfFrame = document.getElementById("pdf-frame")
 
-  // Idle timer — warns user if inactive during quiz
+  // ── DOM refs ────────────────────────────────────────────────
+  const chat          = document.getElementById("chat")
+  const userInput     = document.getElementById("user-input")
+  const quizForm      = document.getElementById("quiz-form")
+  const inputSection  = document.getElementById("input-section")
+  const resultSection = document.getElementById("result-section")
+  const progressFill  = document.getElementById("progress-fill")
+  const progressLabel = document.getElementById("progress-label")
+  const scoreLabel    = document.getElementById("score-label")
+  const finalScore    = document.getElementById("final-score")
+  const restartBtn    = document.getElementById("restart-btn")
+  const readySection  = document.getElementById("ready-section")
+  const readyBtn      = document.getElementById("ready-btn")
+  const openBtn       = document.getElementById("open-btn")
+  const sidebar       = document.getElementById("sidebar")
+  const uploadDocBtn  = document.querySelector(".upload-doc-btn")
+  const pdfViewer     = document.getElementById("pdf-viewer")
+  const pdfFrame      = document.getElementById("pdf-frame")
+  const acctChip      = document.getElementById("acct-chip")
+  const acctDropdown  = document.getElementById("acct-dropdown")
+
+  // ── Admin gating ─────────────────────────────────────────────
+  // Hide upload button for non-admins
+if (!isAdmin && uploadDocBtn) {
+    uploadDocBtn.style.display = "none"
+  }
+
+  // Fill in account info if available
+  const ddEmail    = document.getElementById("dd-email")
+  const ddFullname = document.getElementById("dd-fullname")
+  const acctName   = document.querySelector(".acct-name")
+  const acctAv     = document.querySelector(".acct-av")
+  const sbAvatar   = document.querySelector(".sb-avatar")
+
+  if (currentUser?.email) {
+    if (ddEmail)    ddEmail.textContent    = currentUser.email
+    if (ddFullname) ddFullname.textContent = currentUser.name || currentUser.email
+    const initials = (currentUser.name || currentUser.email || "ME")
+      .split(/[\s@]/)[0].slice(0, 2).toUpperCase()
+    if (acctName)  acctName.textContent  = currentUser.name || "Account"
+    if (acctAv)    acctAv.textContent    = initials
+    if (sbAvatar)  sbAvatar.textContent  = initials
+  }
+
+  // ── Account dropdown ────────────────────────────────────────
+  acctChip?.addEventListener("click", () => {
+    acctDropdown?.classList.toggle("hidden")
+  })
+  document.addEventListener("click", (e) => {
+    if (!document.getElementById("acct-wrap")?.contains(e.target)) {
+      acctDropdown?.classList.add("hidden")
+    }
+  })
+
+  document.getElementById("dd-logout")?.addEventListener("click", async () => {
+    const { logout } = await import('./supabase.js')
+    await logout()
+  })
+
+  // ── Idle timer ───────────────────────────────────────────────
   function resetIdleTimer() {
     clearTimeout(idleTimer)
     if (!quizStarted) return
@@ -139,28 +183,29 @@ document.addEventListener("DOMContentLoaded", () => {
     }, IDLE_LIMIT)
   }
 
-  // Trim messages to avoid token limit
+  // ── Trim messages ────────────────────────────────────────────
   function trimMessages() {
-    if (messages.length > 7) {
-      messages.splice(1, messages.length - 7)
-    }
+    if (messages.length > 7) messages.splice(1, messages.length - 7)
   }
 
-  // Add chat bubble
+  // ── Add chat bubble ──────────────────────────────────────────
   function addBubble(text, type) {
-    const row = document.createElement("div")
+    const row    = document.createElement("div")
     row.className = `bubble-row ${type === "user" ? "user" : ""}`
 
-    const avatar = document.createElement("div")
-    avatar.className = `avatar ${type === "user" ? "user" : "genie"}`
-    avatar.innerHTML = type === "user" ? "ME" : `<img src="/itms_baby/PNG/ITMS 32PX N.png" alt="ITMS" />`
+    const avatar      = document.createElement("div")
+    avatar.className  = `avatar ${type === "user" ? "user" : "genie"}`
+    avatar.innerHTML  = type === "user"
+      ? (acctAv?.textContent || "ME")
+      : `<img src="/itms_baby/PNG/ITMS 32PX N.png" alt="ITMS" />`
 
-    const bubble = document.createElement("div")
-    bubble.className = `bubble ${type}`
-    bubble.innerHTML = type === "genie"
-      ? DOMPurify.sanitize(marked.parse(text))
-      : ""
-    if (type !== "genie") bubble.textContent = text
+    const bubble      = document.createElement("div")
+    bubble.className  = `bubble ${type}`
+    if (type === "genie") {
+      bubble.innerHTML = DOMPurify.sanitize(marked.parse(text))
+    } else {
+      bubble.textContent = text
+    }
 
     if (type === "user") {
       row.appendChild(bubble)
@@ -174,15 +219,15 @@ document.addEventListener("DOMContentLoaded", () => {
     chat.scrollTop = chat.scrollHeight
   }
 
-  // Typing indicator
+  // ── Typing indicator ─────────────────────────────────────────
   function addTypingIndicator() {
-    const row = document.createElement("div")
-    row.className = "bubble-row"
-    row.id = "typing"
-    const avatar = document.createElement("div")
+    const row      = document.createElement("div")
+    row.className  = "bubble-row"
+    row.id         = "typing"
+    const avatar   = document.createElement("div")
     avatar.className = "avatar genie"
     avatar.innerHTML = `<img src="/itms_baby/PNG/ITMS 32PX N.png" alt="ITMS" />`
-    const bubble = document.createElement("div")
+    const bubble   = document.createElement("div")
     bubble.className = "bubble genie typing"
     bubble.innerHTML = "<span></span><span></span><span></span>"
     row.appendChild(avatar)
@@ -195,13 +240,12 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("typing")?.remove()
   }
 
-  // Save quiz result to Supabase
+  // ── Save result ──────────────────────────────────────────────
   async function saveResult(passed) {
     try {
       const { saveQuizResult, supabase } = await import('./supabase.js')
       const { data } = await supabase.auth.getUser()
       const activeModule = document.querySelector(".module-item.active .module-name")?.textContent || "General"
-
       await saveQuizResult(
         data.user?.email,
         sessionStorage.getItem("employeeId") || data.user?.email,
@@ -210,27 +254,26 @@ document.addEventListener("DOMContentLoaded", () => {
         TOTAL_QUESTIONS,
         passed
       )
-
       await markPassedModules()
     } catch (err) {
       console.error("Failed to save result:", err)
     }
   }
 
-  // Reset quiz state
+  // ── Reset quiz ───────────────────────────────────────────────
   function resetQuiz() {
     messages.length = 0
     messages.push({ role: "system", content: buildSystemPrompt(currentPolicy) })
-    questionCount = 0
-    score = 0
-    quizStarted = false
-    progressFill.style.width = "0%"
+    questionCount   = 0
+    score           = 0
+    quizStarted     = false
+    progressFill.style.width  = "0%"
     progressLabel.textContent = `Question 1 of ${TOTAL_QUESTIONS}`
-    scoreLabel.textContent = "Score: 0"
-    chat.innerHTML = ""
+    scoreLabel.textContent    = "Score: 0"
+    chat.innerHTML            = ""
   }
 
-  // Handle AI reply
+  // ── Handle AI reply ──────────────────────────────────────────
   function handleReply(reply) {
     messages.push({ role: "assistant", content: reply })
     removeTypingIndicator()
@@ -238,9 +281,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const hasResult = reply.includes("RESULT: PASS") || reply.includes("RESULT: FAIL")
 
-    // Track score and question count
     if (quizStarted && !hasResult) {
-      const isCorrect = /^correct!/i.test(reply.trim())
+      const isCorrect  = /^correct!/i.test(reply.trim())
       if (isCorrect) {
         score++
         scoreLabel.textContent = `Score: ${score}`
@@ -249,20 +291,15 @@ document.addEventListener("DOMContentLoaded", () => {
       if (isFeedback && questionCount < TOTAL_QUESTIONS) {
         questionCount++
         progressLabel.textContent = `Question ${questionCount} of ${TOTAL_QUESTIONS}`
-        progressFill.style.width = `${(questionCount / TOTAL_QUESTIONS) * 100}%`
+        progressFill.style.width  = `${(questionCount / TOTAL_QUESTIONS) * 100}%`
       }
     }
 
-    // Force final summary if all questions done
     if (questionCount >= TOTAL_QUESTIONS && !hasResult) {
-      askITMS(`All ${TOTAL_QUESTIONS} questions have been answered. 
-      Give the final summary now. 
-      Correct answers: ${score} out of ${TOTAL_QUESTIONS}.
-      End with RESULT: PASS or RESULT: FAIL.`)
+      askITMS(`All ${TOTAL_QUESTIONS} questions have been answered. Give the final summary now. Correct answers: ${score} out of ${TOTAL_QUESTIONS}. End with RESULT: PASS or RESULT: FAIL.`)
       return
     }
 
-    // Show results
     if (hasResult) {
       const failed = reply.includes("RESULT: FAIL")
       saveResult(!failed)
@@ -272,8 +309,8 @@ document.addEventListener("DOMContentLoaded", () => {
           resetQuiz()
           inputSection.classList.add("hidden")
           resultSection.classList.remove("hidden")
-          finalScore.textContent = `${score}/${TOTAL_QUESTIONS}`
-          restartBtn.textContent = "Review Policy & Retry"
+          finalScore.textContent  = `${score}/${TOTAL_QUESTIONS}`
+          restartBtn.textContent  = "Review Policy & Retry"
           if (pdfViewer) pdfViewer.classList.add("hidden")
           score = 0
         }, 2000)
@@ -281,8 +318,8 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => {
           inputSection.classList.add("hidden")
           resultSection.classList.remove("hidden")
-          finalScore.textContent = `${score}/${TOTAL_QUESTIONS}`
-          restartBtn.textContent = "Back to Home"
+          finalScore.textContent  = `${score}/${TOTAL_QUESTIONS}`
+          restartBtn.textContent  = "Back to Home"
           restartBtn.onclick = () => window.location.href = "landing.html"
           score = 0
         }, 1000)
@@ -290,7 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Send message to AI
+  // ── Send to AI ───────────────────────────────────────────────
   async function askITMS(userMessage) {
     messages.push({ role: "user", content: userMessage })
     trimMessages()
@@ -302,7 +339,6 @@ document.addEventListener("DOMContentLoaded", () => {
         messages,
       })
       handleReply(response.choices[0].message.content)
-
     } catch (err) {
       removeTypingIndicator()
       console.error(err)
@@ -314,19 +350,10 @@ document.addEventListener("DOMContentLoaded", () => {
           try {
             const strictMessages = [
               messages[0],
-              {
-                role: "system",
-                content: `REMINDER: Ask EXACTLY ${TOTAL_QUESTIONS} questions. 
-                Current count: ${questionCount}.
-                Always start feedback with "Correct!" or "Incorrect."
-                End with RESULT: PASS or RESULT: FAIL after all questions.`
-              },
+              { role: "system", content: `REMINDER: Ask EXACTLY ${TOTAL_QUESTIONS} questions. Current count: ${questionCount}. Always start feedback with "Correct!" or "Incorrect." End with RESULT: PASS or RESULT: FAIL after all questions.` },
               ...messages.slice(1)
             ]
-            const retryResponse = await openai.chat.completions.create({
-              model: fallbackModel,
-              messages: strictMessages,
-            })
+            const retryResponse = await openai.chat.completions.create({ model: fallbackModel, messages: strictMessages })
             handleReply(retryResponse.choices[0].message.content)
           } catch {
             addBubble("⚠️ Both models are unavailable. Please try again later.", "genie")
@@ -344,64 +371,110 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Add module to sidebar
-  function addModuleToSidebar(name, policyText, fileUrl) {
+  // ── Add module card ──────────────────────────────────────────
+  // Builds a card that looks identical to the built-in module items.
+  // desc: short description shown under the name (like the placeholders).
+  // fileUrl: PDF url — PDF only opens when the card is clicked.
+  // adminOnly: if true, rename on dblclick is enabled.
+  function addModuleToSidebar(name, desc, policyText, fileUrl) {
     const container = document.getElementById("uploaded-modules")
-    const item = document.createElement("div")
-    item.className = "module-item"
-    item.dataset.policy = policyText
-    item.dataset.url = fileUrl
 
+    const item = document.createElement("div")
+    item.className        = "module-item"
+    item.dataset.policy   = policyText
+    item.dataset.url      = fileUrl || ""
+
+    // ── dot ──
     const dot = document.createElement("div")
     dot.className = "module-dot"
 
+    // ── info block ──
+    const info = document.createElement("div")
+    info.className = "module-item-info"
+
     const nameSpan = document.createElement("span")
-    nameSpan.className = "module-name"
+    nameSpan.className   = "module-name"
     nameSpan.textContent = name
 
+    const descSpan = document.createElement("span")
+    descSpan.className   = "module-desc"
+    descSpan.textContent = desc || "Uploaded policy document"
+
+    info.appendChild(nameSpan)
+    info.appendChild(descSpan)
+
+    // ── badge ──
     const badge = document.createElement("span")
-    badge.className = "module-badge"
+    badge.className   = "module-badge"
     badge.textContent = `${TOTAL_QUESTIONS} Q`
 
-    // Double click to rename
-    nameSpan.addEventListener("dblclick", () => {
-      const input = document.createElement("input")
-      input.className = "edit-input"
-      input.value = nameSpan.textContent
-      nameSpan.replaceWith(input)
-      input.focus()
-      input.addEventListener("blur", () => {
-        nameSpan.textContent = input.value || name
-        input.replaceWith(nameSpan)
+    // ── Admin-only: rename on dblclick ──
+    if (isAdmin) {
+      nameSpan.title = "Double-click to rename"
+      nameSpan.addEventListener("dblclick", (e) => {
+        e.stopPropagation()
+        const input = document.createElement("input")
+        input.className   = "edit-input"
+        input.value       = nameSpan.textContent
+        nameSpan.replaceWith(input)
+        input.focus()
+        input.select()
+        const finish = () => {
+          nameSpan.textContent = input.value.trim() || name
+          input.replaceWith(nameSpan)
+        }
+        input.addEventListener("blur",    finish)
+        input.addEventListener("keydown", (ev) => {
+          if (ev.key === "Enter")  { input.blur() }
+          if (ev.key === "Escape") { nameSpan.textContent = name; input.replaceWith(nameSpan) }
+        })
       })
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") input.blur()
-        if (e.key === "Escape") { nameSpan.textContent = name; input.replaceWith(nameSpan) }
-      })
-    })
 
-    // Click to select module
+      // Admin-only: edit description on dblclick
+      descSpan.title = "Double-click to edit description"
+      descSpan.addEventListener("dblclick", (e) => {
+        e.stopPropagation()
+        const input = document.createElement("input")
+        input.className   = "edit-input"
+        input.value       = descSpan.textContent
+        descSpan.replaceWith(input)
+        input.focus()
+        input.select()
+        const finish = () => {
+          descSpan.textContent = input.value.trim() || (desc || "Uploaded policy document")
+          input.replaceWith(descSpan)
+        }
+        input.addEventListener("blur",    finish)
+        input.addEventListener("keydown", (ev) => {
+          if (ev.key === "Enter")  { input.blur() }
+          if (ev.key === "Escape") { descSpan.textContent = desc; input.replaceWith(descSpan) }
+        })
+      })
+    }
+
+    // ── Click: select module & open PDF ──
     item.addEventListener("click", () => {
       document.querySelectorAll(".module-item").forEach(i => i.classList.remove("active"))
       item.classList.add("active")
       currentPolicy = item.dataset.policy
       resetQuiz()
-      quizForm.classList.add("hidden")
-      readySection.classList.remove("hidden")
+
+      // Show PDF only when this card is explicitly clicked
       if (item.dataset.url) {
-        pdfFrame.src = item.dataset.url + '#toolbar=0'
+        pdfFrame.src = item.dataset.url + "#toolbar=0"
         pdfViewer.classList.remove("hidden")
+      } else {
+        pdfViewer.classList.add("hidden")
       }
     })
 
     item.appendChild(dot)
-    item.appendChild(nameSpan)
+    item.appendChild(info)
     item.appendChild(badge)
     container.appendChild(item)
-    item.click()
   }
 
-  // Load existing modules from Supabase
+  // ── Load modules from Supabase ───────────────────────────────
   async function loadExistingModules() {
     try {
       const { supabase } = await import('./supabase.js')
@@ -417,22 +490,22 @@ document.addEventListener("DOMContentLoaded", () => {
       for (const policy of data) {
         if (seen.has(policy.file_url)) continue
         seen.add(policy.file_url)
-        addModuleToSidebar(policy.module_name, policy.policy_text || '', policy.file_url)
+        // Use module_description column if it exists, else fallback
+        const desc = policy.module_description || "Uploaded policy document"
+        addModuleToSidebar(policy.module_name, desc, policy.policy_text || "", policy.file_url)
       }
 
-      // Mark passed modules AFTER all modules are loaded
       await markPassedModules()
     } catch (err) {
       console.error("Failed to load modules:", err)
     }
   }
 
-  // Mark passed modules green
+  // ── Mark passed modules green ────────────────────────────────
   async function markPassedModules() {
     try {
       const { getPassedModules } = await import('./supabase.js')
       const passedModules = await getPassedModules()
-      
       document.querySelectorAll(".module-item").forEach(item => {
         const moduleName = item.querySelector(".module-name")?.textContent
         if (passedModules.includes(moduleName)) {
@@ -446,17 +519,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ============================================================
-  // Event Listeners
-  // ============================================================
+  // ══════════════════════════════════════════════════════════════
+  // EVENT LISTENERS
+  // ══════════════════════════════════════════════════════════════
 
-  // Prevent copy/paste
-  userInput.addEventListener("copy", (e) => e.preventDefault())
-  userInput.addEventListener("paste", (e) => e.preventDefault())
-  userInput.addEventListener("cut", (e) => e.preventDefault())
+  // Prevent copy/paste in textarea
+  userInput.addEventListener("copy",    (e) => e.preventDefault())
+  userInput.addEventListener("paste",   (e) => e.preventDefault())
+  userInput.addEventListener("cut",     (e) => e.preventDefault())
   userInput.addEventListener("keydown", resetIdleTimer)
-  userInput.addEventListener("click", resetIdleTimer)
+  userInput.addEventListener("click",   resetIdleTimer)
   document.addEventListener("mousemove", resetIdleTimer)
+
+  // Built-in module cards — click to select (PDF only if data-url set)
+  document.querySelectorAll(".module-item[data-module-name]").forEach(item => {
+    item.addEventListener("click", () => {
+      document.querySelectorAll(".module-item").forEach(i => i.classList.remove("active"))
+      item.classList.add("active")
+      currentPolicy = IT_POLICY  // built-in cards always use the default policy
+      pdfViewer.classList.add("hidden")  // built-in cards have no PDF
+      resetQuiz()
+    })
+  })
 
   // Ready button
   readyBtn.addEventListener("click", async () => {
@@ -464,8 +548,8 @@ document.addEventListener("DOMContentLoaded", () => {
     readySection.classList.add("hidden")
     quizForm.classList.remove("hidden")
     questionCount = 0
-    quizStarted = true
-    if (pdfViewer) pdfViewer.classList.add("hidden")
+    quizStarted   = true
+    pdfViewer.classList.add("hidden")
     await askITMS("I have read the policy and I am ready to start the quiz!")
   })
 
@@ -475,15 +559,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const userMessage = userInput.value.trim()
     if (!userMessage) return
 
-    // 🔧 CHEAT CODE - remove in production!
+    // 🔧 CHEAT CODE — remove in production!
     if (userMessage.toLowerCase() === "cheat") {
-      score = TOTAL_QUESTIONS
+      score         = TOTAL_QUESTIONS
       questionCount = TOTAL_QUESTIONS
-      quizStarted = false
-      progressFill.style.width = "100%"
+      quizStarted   = false
+      progressFill.style.width  = "100%"
       progressLabel.textContent = `Question ${TOTAL_QUESTIONS} of ${TOTAL_QUESTIONS}`
-      scoreLabel.textContent = `Score: ${score}`
-      const activeModule = document.querySelector(".module-item.active .module-name")?.textContent || "General"
+      scoreLabel.textContent    = `Score: ${score}`
       await saveResult(true)
       inputSection.classList.add("hidden")
       resultSection.classList.remove("hidden")
@@ -501,7 +584,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("submit-btn").disabled = false
   })
 
-  // Restart / Review button
+  // Restart button
   restartBtn.addEventListener("click", () => {
     restartBtn.textContent = "Start over"
     restartBtn.onclick = null
@@ -510,41 +593,19 @@ document.addEventListener("DOMContentLoaded", () => {
     resultSection.classList.add("hidden")
     quizForm.classList.add("hidden")
     readySection.classList.remove("hidden")
-    if (pdfFrame?.src && pdfFrame.src !== window.location.href) {
-      pdfViewer.classList.remove("hidden")
-    }
+    pdfViewer.classList.add("hidden")
   })
 
-  // Sidebar toggle
-  closeBtn.addEventListener("click", () => {
-    sidebar.classList.add("closed")
-    openBtn.classList.remove("hidden")
+
+  openBtn?.addEventListener("click", () => {
+    sidebar.classList.toggle("closed")
   })
 
-  openBtn.addEventListener("click", () => {
-    sidebar.classList.remove("closed")
-    openBtn.classList.add("hidden")
-  })
+  uploadDocBtn?.addEventListener("click", () => {
+    if (!isAdmin) return   // extra guard
 
-  // Static module items click
-  document.querySelectorAll(".module-item").forEach(item => {
-    item.addEventListener("click", () => {
-      document.querySelectorAll(".module-item").forEach(i => i.classList.remove("active"))
-      item.classList.add("active")
-      const url = item.dataset.url
-      if (url) {
-        pdfFrame.src = url + '#toolbar=0'
-        pdfViewer.classList.remove("hidden")
-      } else {
-        pdfViewer.classList.add("hidden")
-      }
-    })
-  })
-
-  // Upload PDF
-  uploadDocBtn.addEventListener("click", () => {
-    const fileInput = document.createElement("input")
-    fileInput.type = "file"
+    const fileInput  = document.createElement("input")
+    fileInput.type   = "file"
     fileInput.accept = ".pdf"
     fileInput.click()
 
@@ -555,7 +616,6 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const { supabase, extractPDFText, uploadPolicy } = await import('./supabase.js')
 
-        // Check for duplicate
         const { data: existing } = await supabase
           .from('policies')
           .select('id, module_name')
@@ -567,21 +627,27 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!confirmOverwrite) return
         }
 
-        const defaultName = file.name.replace('.pdf', '')
+        const defaultName = file.name.replace(/\.pdf$/i, '')
+
         const customName = prompt("Enter a name for this module:", defaultName)
         if (customName === null) return
 
+        const customDesc = prompt(
+          "Enter a short description for this module:",
+          "Uploaded policy document"
+        )
+        if (customDesc === null) return
+
         const moduleName = customName.trim() || defaultName
+        const moduleDesc = customDesc.trim() || "Uploaded policy document"
+
         const policyText = await extractPDFText(file)
-        const fileUrl = await uploadPolicy(file, moduleName, policyText)
+        const fileUrl    = await uploadPolicy(file, moduleName, policyText, moduleDesc)
 
         currentPolicy = policyText
         resetQuiz()
-        quizForm.classList.add("hidden")
-        readySection.classList.remove("hidden")
-        pdfFrame.src = fileUrl + '#toolbar=0'
-        pdfViewer.classList.remove("hidden")
-        addModuleToSidebar(moduleName, policyText, fileUrl)
+        // Do NOT auto-open PDF — it will open when the user clicks the card
+        addModuleToSidebar(moduleName, moduleDesc, policyText, fileUrl)
 
       } catch (err) {
         console.error(err)
@@ -590,8 +656,14 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   })
 
-  // Init
-  document.querySelector(".module-item").classList.add("active")
-  addBubble("👋 Welcome! Upload a policy PDF from the sidebar or select a module, then click <strong>I'm ready</strong> to start the quiz.", "genie")
+  const firstModule = document.querySelector(".module-item")
+  if (firstModule) firstModule.classList.add("active")
+
+  addBubble(
+    "👋 Welcome! Select a module from the list, then click <strong>I'm ready — start the quiz</strong> to begin.",
+    "genie"
+  )
+
   loadExistingModules()
 })
+
