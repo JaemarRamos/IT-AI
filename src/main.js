@@ -160,6 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
       await showAdminDashboard()
     } else {
       await loadExistingModules()
+      subscribeToNewModules() 
     }
   }
 
@@ -367,6 +368,36 @@ if (!isAdmin && uploadDocBtn) {
     await logout()
   })
 
+  function subscribeToNewModules() {
+  import('./supabase.js').then(({ supabase }) => {
+    supabase
+      .channel('policies-changes')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'policies' },
+        (payload) => {
+          console.log("New policy uploaded:", payload.new)
+          const policy = payload.new
+          if (!policy.is_active) return
+
+          // Check if already in sidebar
+          const existing = document.querySelector(
+            `[data-url="${policy.file_url}"]`
+          )
+          if (existing) return
+
+          const desc = policy.module_description || "Uploaded policy document"
+          addModuleToSidebar(
+            policy.module_name,
+            desc,
+            policy.policy_text || "",
+            policy.file_url
+          )
+        }
+      )
+      .subscribe()
+  })
+}
+
   
   function resetIdleTimer() {
     clearTimeout(idleTimer)
@@ -565,7 +596,8 @@ if (!isAdmin && uploadDocBtn) {
 
   function addModuleToSidebar(name, desc, policyText, fileUrl) {
     const container = document.getElementById("uploaded-modules")
-
+    
+    if (!container) return
     const item = document.createElement("div")
     item.className        = "module-item"
     item.dataset.policy   = policyText
@@ -788,51 +820,56 @@ item.addEventListener("click", () => {
     fileInput.accept = ".pdf"
     fileInput.click()
 
-    fileInput.addEventListener("change", async (e) => {
-      const file = e.target.files[0]
-      if (!file) return
+  fileInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
 
-      try {
-        const { supabase, extractPDFText, uploadPolicy } = await import('./supabase.js')
+    try {
+      const { supabase, extractPDFText, uploadPolicy } = await import('./supabase.js')
 
-        const { data: existing } = await supabase
-          .from('policies')
-          .select('id, module_name')
-          .eq('file_name', file.name)
-           .maybeSingle()
+      const { data: existing } = await supabase
+        .from('policies')
+        .select('id, module_name')
+        .eq('file_name', file.name)
+        .maybeSingle()
 
-        if (existing) {
-          const confirmOverwrite = confirm(`"${file.name}" already exists as "${existing.module_name}". Replace it?`)
-          if (!confirmOverwrite) return
-        }
-
-        const defaultName = file.name.replace(/\.pdf$/i, '')
-
-        const customName = prompt("Enter a name for this module:", defaultName)
-        if (customName === null) return
-
-        const customDesc = prompt(
-          "Enter a short description for this module:",
-          "Uploaded policy document"
-        )
-        if (customDesc === null) return
-
-        const moduleName = customName.trim() || defaultName
-        const moduleDesc = customDesc.trim() || "Uploaded policy document"
-
-        const policyText = await extractPDFText(file)
-        const fileUrl    = await uploadPolicy(file, moduleName, policyText, moduleDesc)
-
-        currentPolicy = policyText
-        resetQuiz()
-        addModuleToSidebar(moduleName, moduleDesc, policyText, fileUrl)
-
-      } catch (err) {
-        console.error("Full error:", JSON.stringify(err)) 
-        addBubble("❌ Failed to upload PDF. Please try again.", "genie")
+      if (existing) {
+        const confirmOverwrite = confirm(`"${file.name}" already exists as "${existing.module_name}". Replace it?`)
+        if (!confirmOverwrite) return
       }
-    })
+
+      const defaultName = file.name.replace(/\.pdf$/i, '')
+      const customName = prompt("Enter a name for this module:", defaultName)
+      if (customName === null) return
+
+      const customDesc = prompt("Enter a short description for this module:", "Uploaded policy document")
+      if (customDesc === null) return
+
+      const moduleName = customName.trim() || defaultName
+      const moduleDesc = customDesc.trim() || "Uploaded policy document"
+
+      console.log("Extracting PDF...")
+      const policyText = await extractPDFText(file)
+      console.log("Uploading policy...")
+      const fileUrl = await uploadPolicy(file, moduleName, policyText, moduleDesc)
+      console.log("Upload success:", fileUrl)
+
+      currentPolicy = policyText
+        if (isAdmin) {
+          await showAdminDashboard()
+        } else {
+          resetQuiz()
+          addModuleToSidebar(moduleName, moduleDesc, policyText, fileUrl)
+        }
+        console.log("Upload complete!")
+
+    } catch (err) {
+      console.error("Full error:", err) // ← log the actual error object not JSON
+      console.error("Error message:", err.message)
+      console.error("Error stack:", err.stack)
+    }
   })
+})
 
 
   const firstModule = document.querySelector(".module-item")
