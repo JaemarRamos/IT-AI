@@ -17,13 +17,9 @@ loginBtn.addEventListener("click", async () => {
   loginBtn.textContent = "Signing in..."
   loginBtn.disabled = true
 
-  // If input contains @ it's an email (admin), otherwise convert ID to email
-  const email = input.includes("@") ? input : `${input}@itms.internal`
+  const email = input.includes("@") ? input : `${input}@jae.com.ph`
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
     errorMsg.textContent = "Invalid credentials. Please try again."
@@ -32,9 +28,23 @@ loginBtn.addEventListener("click", async () => {
     return
   }
 
+  // Fetch profile to get real name and email
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name, email, employee_id, role')
+    .eq('id', data.user.id)
+    .single()
+
   sessionStorage.setItem("loggedIn", "true")
-  sessionStorage.setItem("employeeId", input)
-  sessionStorage.setItem("user", JSON.stringify(data.user))
+  sessionStorage.setItem("employeeId", profile?.employee_id || input)
+  sessionStorage.setItem("user", JSON.stringify({
+    id: data.user.id,
+    email: profile?.email || email,        // real email
+    name: profile?.full_name || input,     // real full name
+    role: profile?.role || "employee",
+    authEmail: email                        // keep auth email for admin check
+  }))
+
   window.location.href = "index.html"
 })
 

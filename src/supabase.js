@@ -75,7 +75,7 @@ export async function extractPDFText(file) {
 }
 
 export async function createEmployee(employeeId, password, fullName, email, role = 'employee') {
-  const fakeEmail = `${employeeId}@itms.internal`
+  const fakeEmail = `${employeeId}@jae.com.ph`
 
   const { data, error: authError } = await supabase.auth.signUp({
     email: fakeEmail,
@@ -100,7 +100,7 @@ export async function createEmployee(employeeId, password, fullName, email, role
   return data.user
 }
 
-export async function saveQuizResult(email, employeeId, moduleName, score, totalQuestions, passed) {
+export async function saveQuizResult(email, employeeId, fullName, moduleName, score, totalQuestions, passed) {
   const { data: { user } } = await supabase.auth.getUser()
   
   const { error } = await supabase
@@ -108,7 +108,7 @@ export async function saveQuizResult(email, employeeId, moduleName, score, total
     .insert({
       user_id: user?.id,
       employee_id: employeeId,
-      full_name: email,
+      full_name: fullName, // ← now uses actual name
       module_name: moduleName,
       score: score,
       passed: passed
