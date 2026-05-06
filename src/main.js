@@ -620,7 +620,7 @@ if (!isAdmin && uploadDocBtn) {
           .from('policies')
           .select('id, module_name')
           .eq('file_name', file.name)
-          .single()
+           .maybeSingle()
 
         if (existing) {
           const confirmOverwrite = confirm(`"${file.name}" already exists as "${existing.module_name}". Replace it?`)
