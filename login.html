@@ -3,18 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ITMS — Login</title>
+    <title>ITMS — Sign In</title>
     <link rel="stylesheet" href="src/login.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&display=swap" rel="stylesheet" />
     <link rel="icon" type="image/svg+xml" href="/itms_baby/PNG/ITMS 16PX N.png" />
   </head>
   <body class="login-body">
 
     <div class="login-page">
-      <div class="glow-orb"></div>
-      <div class="glow-orb2"></div>
+
+      <!-- decorative side strip -->
+      <div class="login-strip"></div>
 
       <div class="login-card">
         <div class="login-logo">
@@ -22,10 +23,10 @@
             <img src="/itms_baby/PNG/ITMS 120PX N.png" alt="ITMS" width="28" />
           </div>
           <div class="logo-title">ITMS</div>
-          <div class="logo-sub">Security Policy Quiz System</div>
+          <div class="logo-sub">IT Security Training System</div>
         </div>
 
-        <div style="display:flex; justify-content:center; margin-bottom:1.5rem;">
+        <div style="display:flex;justify-content:center;margin-bottom:1.5rem;">
           <div class="badge">
             <div class="badge-dot"></div>
             System Online
@@ -35,13 +36,13 @@
         <div class="login-divider"></div>
 
         <div class="form-group">
-          <label class="form-label">Employee ID</label>
-          <input class="form-input" type="text" id="email" placeholder="admin@ITMS.com" />
+          <label class="form-label">Employee ID or Email</label>
+          <input class="form-input" type="text" id="email" placeholder="e.g. 10001 or admin@itms.com" autocomplete="username" />
         </div>
 
         <div class="form-group">
           <label class="form-label">Password</label>
-          <input class="form-input" type="password" id="password" placeholder="••••••••" />
+          <input class="form-input" type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
         </div>
 
         <div class="forgot"><a href="#">Forgot password?</a></div>
@@ -54,6 +55,7 @@
         </div>
       </div>
     </div>
+
     <script type="module" src="src/login.js"></script>
   </body>
 </html>

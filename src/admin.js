@@ -56,3 +56,8 @@ createBtn.addEventListener("click", async () => {
   createBtn.textContent = "Create Employee"
   createBtn.disabled = false
 })
+
+document.getElementById("logout-btn").addEventListener("click", async () => {
+  const { logout } = await import('./supabase.js')
+  await logout()
+})

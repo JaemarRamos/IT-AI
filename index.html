@@ -4,120 +4,286 @@
     <meta charset="UTF-8" />
     <script src="/src/auth.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ITMS</title>
+    <title>ITMS — IT Security Training</title>
     <link rel="stylesheet" href="src/style.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="icon" type="image/svg+xml" href="/itms_baby/PNG/ITMS 16PX N.png" />
   </head>
   <body>
     <div class="layout">
 
+      <!-- ═══════════════════════════════════
+           ICON SIDEBAR
+      ═══════════════════════════════════ -->
       <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-          <span class="sidebar-title">Modules</span>
-          <button class="close-btn" id="close-btn" title="Close sidebar">&#x2715;</button>
+        <div class="sb-top">
+          <div class="sb-logo">
+            <img src="/itms_baby/PNG/ITMS 64PX N.png" alt="ITMS" width="22" height="22" />
+          </div>
+          <nav class="sb-nav">
+            <button class="sb-icon sb-icon--active" title="Training home">
+              <svg viewBox="0 0 20 20" fill="none">
+                <rect x="3" y="3" width="14" height="4" rx="1.5" fill="currentColor"/>
+                <rect x="3" y="9" width="14" height="4" rx="1.5" fill="currentColor"/>
+                <rect x="3" y="15" width="8" height="2" rx="1" fill="currentColor"/>
+              </svg>
+            </button>
+            <button class="sb-icon" title="My progress">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+                <polyline points="3,14 7,9 11,12 17,5"/>
+              </svg>
+            </button>
+          </nav>
         </div>
 
-        <div class="sidebar-section">
-          <div class="section-label">IT Policies</div>
-          <div class="module-item active">
-            <div class="module-dot"></div>
-            <span class="module-name">Security & Access</span>
-            <span class="module-badge">5 Q</span>
-          </div>
-          <div class="module-item">
-            <div class="module-dot"></div>
-            <span class="module-name">Data Protection</span>
-            <span class="module-badge">5 Q</span>
-          </div>
-          <div class="module-item">
-            <div class="module-dot"></div>
-            <span class="module-name">Device Usage</span>
-            <span class="module-badge">5 Q</span>
-          </div>
-          <div class="module-item">
-            <div class="module-dot"></div>
-            <span class="module-name">Remote Work</span>
-            <span class="module-badge">5 Q</span>
-          </div>
-          <div id="uploaded-modules" class="uploaded-modules"></div>
-        </div>
-
-        <div class="sidebar-section">
-          <div class="section-label">Upload Policy</div>
-          <button class="upload-doc-btn">&#x2B06; Upload document</button>
-          <div class="upload-hint">PDF supported</div>
-        </div>
-
-        <div class="sidebar-footer">
-          <div class="sidebar-version">ITMS v1.0</div>
+        <div class="sb-bottom">
+          <div class="sb-rule"></div>
+          <button class="sb-icon upload-doc-btn" title="Upload policy PDF">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13V4M7 7l3-3 3 3"/><path d="M4 17h12"/>
+            </svg>
+          </button>
+          <button class="sb-avatar" id="sb-account-btn" title="Account">JD</button>
         </div>
       </aside>
 
+      <!-- ═══════════════════════════════════
+           MAIN AREA
+      ═══════════════════════════════════ -->
       <div class="main" id="main">
+
+        <!-- TOPBAR -->
         <header class="app-header">
+          <button class="open-btn hidden" id="open-btn" title="Open sidebar">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+              <line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/>
+            </svg>
+          </button>
+
           <div class="header-left">
-            <button class="open-btn hidden" id="open-btn" title="Open sidebar">&#9776;</button>
-          <div class="title-group">
-            <img src="/itms_baby/PNG/ITMS 64PX N.png" alt="ITMS" class="ITMS-icon-img" />
+            <div class="header-logo-mark">
+              <svg viewBox="0 0 20 20" fill="none">
+                <path d="M10 2L3 5.5V10C3 14 6 17 10 18C14 17 17 14 17 10V5.5L10 2Z" fill="#BA7517" fill-opacity="0.15" stroke="#BA7517" stroke-width="1.3"/>
+              </svg>
+            </div>
             <div>
-              <h1>ITMS</h1>
-              <div class="header-sub">Security protocol quiz</div>
+              <div class="header-title">ITMS</div>
+              <div class="header-sub">Security training</div>
             </div>
           </div>
-          <a href="admin.html" id="admin-link" class="admin-link hidden">⚙ Admin</a>
-          <div class="progress-group">
-            <span id="progress-label">Question 1 of 5</span>
-            <span id="score-label">Score: 0</span>
+
+          <div class="header-center">
+            <div class="progress-group">
+              <span id="progress-label">Question 1 of 5</span>
+              <span id="score-label">Score: 0</span>
+            </div>
           </div>
+
+          <div class="header-right">
+            <a href="admin.html" id="admin-link" class="admin-link hidden">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
+                <circle cx="8" cy="8" r="2.5"/>
+                <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.1 3.1l1.4 1.4M11.5 11.5l1.4 1.4M3.1 12.9l1.4-1.4M11.5 4.5l1.4-1.4"/>
+              </svg>
+              Admin
+            </a>
+
+            <div class="acct-wrap" id="acct-wrap">
+              <button class="acct-chip" id="acct-chip">
+                <div class="acct-av">JD</div>
+                <span class="acct-name">Account</span>
+                <svg class="acct-caret" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+                  <polyline points="1,1 5,5 9,1"/>
+                </svg>
+              </button>
+
+              <div class="acct-dropdown hidden" id="acct-dropdown">
+                <div class="dd-head">
+                  <div class="dd-name" id="dd-fullname">Employee</div>
+                  <div class="dd-email" id="dd-email">—</div>
+                  <span class="dd-role">IT Staff</span>
+                </div>
+                <div class="dd-group">
+                  <button class="dd-item">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3 2.7-5 6-5s6 2 6 5"/></svg>
+                    My profile
+                  </button>
+                  <button class="dd-item">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.1 3.1l1.4 1.4M11.5 11.5l1.4 1.4M3.1 12.9l1.4-1.4M11.5 4.5l1.4-1.4"/></svg>
+                    Settings
+                  </button>
+                </div>
+                <div class="dd-group">
+                  <button class="dd-item">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><polyline points="2,10 5,13 14,4"/></svg>
+                    My training record
+                  </button>
+                  <button class="dd-item">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="8"/><circle cx="8" cy="11" r="0.6" fill="currentColor"/></svg>
+                    Help &amp; support
+                  </button>
+                </div>
+                <div class="dd-group">
+                  <button class="dd-item dd-danger" id="dd-logout">
+                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M6 3H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3M10 11l3-3-3-3M13 8H6"/></svg>
+                    Log out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="progress-bar">
             <div class="progress-fill" id="progress-fill"></div>
           </div>
         </header>
 
+        <!-- MAIN CONTENT -->
         <main class="main-content">
+
+          <!-- ── LANDING / READY SECTION ── -->
+          <div id="ready-section" class="ready-section">
+
+            <div class="landing-welcome">
+              <div>
+                <h2 class="landing-title">Good day. Let's get started.</h2>
+                <p class="landing-sub">Select a module, review the policy, then take the quiz.<br>A score of <strong>80%</strong> or higher is required for compliance.</p>
+              </div>
+              <div class="compliance-badge" id="compliance-badge">
+                <span class="compliance-dot"></span>
+                <span id="compliance-text">Modules pending</span>
+              </div>
+            </div>
+
+            <div class="deadline-bar">
+              <svg viewBox="0 0 16 16" fill="none" stroke="#E24B4A" stroke-width="1.4" stroke-linecap="round" style="flex-shrink:0;width:16px;height:16px;">
+                <circle cx="8" cy="8" r="6"/><line x1="8" y1="4.5" x2="8" y2="8.5"/><circle cx="8" cy="11" r="0.7" fill="#E24B4A"/>
+              </svg>
+              <p>All modules must be completed by the company deadline. Incomplete training will be flagged to your manager.</p>
+            </div>
+
+            <div class="landing-modules-label">Required modules</div>
+            <div class="landing-module-list">
+
+              <div class="module-item active" data-module-name="Security &amp; Access">
+                <div class="module-dot"></div>
+                <div class="module-item-info">
+                  <span class="module-name">Security &amp; Access</span>
+                  <span class="module-desc">Passwords, access control, and account security</span>
+                </div>
+                <span class="module-badge">5 Q</span>
+              </div>
+
+              <div class="module-item" data-module-name="Data Protection">
+                <div class="module-dot"></div>
+                <div class="module-item-info">
+                  <span class="module-name">Data Protection</span>
+                  <span class="module-desc">How to store, share, and protect sensitive data</span>
+                </div>
+                <span class="module-badge">5 Q</span>
+              </div>
+
+              <div class="module-item" data-module-name="Device Usage">
+                <div class="module-dot"></div>
+                <div class="module-item-info">
+                  <span class="module-name">Device Usage</span>
+                  <span class="module-desc">Company devices, public Wi-Fi, and safe browsing</span>
+                </div>
+                <span class="module-badge">5 Q</span>
+              </div>
+
+              <div class="module-item" data-module-name="Remote Work">
+                <div class="module-dot"></div>
+                <div class="module-item-info">
+                  <span class="module-name">Remote Work</span>
+                  <span class="module-desc">VPN, home networks, and remote access policies</span>
+                </div>
+                <span class="module-badge">5 Q</span>
+              </div>
+
+              <!-- JS injects uploaded modules here -->
+              <div id="uploaded-modules" class="uploaded-modules"></div>
+
+            </div>
+
+            <!-- PDF viewer -->
+            <div id="pdf-viewer" class="pdf-viewer hidden">
+              <iframe id="pdf-frame" src="" title="Policy document"></iframe>
+            </div>
+
+            <button id="ready-btn" class="submit-btn ready-btn-cta">
+              I'm ready — start the quiz
+              <svg viewBox="0 0 16 10" fill="none" stroke="white" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="1" y1="5" x2="14" y2="5"/><polyline points="10,1 14,5 10,9"/>
+              </svg>
+            </button>
+
+          </div>
+
+          <!-- ── CHAT SECTION ── -->
           <section id="chat" class="chat-section"></section>
 
-        <div id="pdf-viewer" class="pdf-viewer hidden">
-          <iframe id="pdf-frame" src="" type="application/pdf"></iframe>
-        </div>
-
+          <!-- ── INPUT SECTION ── -->
           <div id="input-section" class="input-section">
-            <div id="ready-section" class="ready-section">
-              <button id="ready-btn" class="submit-btn">
-                I'm ready, start the quiz!
-              </button>
-            </div>
             <form id="quiz-form" class="quiz-form hidden">
               <div class="input-wrapper">
                 <textarea
                   id="user-input"
-                  placeholder="Type your answer here..."
+                  placeholder="Describe what you would do in this situation…"
                 ></textarea>
               </div>
               <button type="submit" id="submit-btn" class="submit-btn">
-                Submit
+                Submit answer
               </button>
             </form>
           </div>
 
+          <!-- ── RESULT SECTION ── -->
           <div id="result-section" class="result-section hidden">
             <div class="score-card">
               <div id="final-score" class="final-score">0/5</div>
-              <div class="score-label">IT Policy Quiz Complete</div>
+              <div class="score-label">Quiz complete</div>
             </div>
             <button id="restart-btn" class="restart-btn">Start over</button>
           </div>
+
         </main>
       </div>
 
+          <!-- PDF FULL SCREEN OVERLAY -->
+    <div id="pdf-overlay" class="pdf-overlay hidden">
+      <div class="pdf-overlay-header">
+        <button id="pdf-back-btn" class="pdf-back-btn">
+          <svg viewBox="0 0 16 10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="15" y1="5" x2="2" y2="5"/><polyline points="6,1 2,5 6,9"/>
+          </svg>
+          Back to Modules
+        </button>
+        <div class="pdf-overlay-title" id="pdf-overlay-title">Policy Document</div>
+        <button id="pdf-ready-btn" class="pdf-ready-btn">
+          I'm ready — start the quiz
+          <svg viewBox="0 0 16 10" fill="none" stroke="white" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="1" y1="5" x2="14" y2="5"/><polyline points="10,1 14,5 10,9"/>
+          </svg>
+        </button>
+      </div>
+      <div class="pdf-overlay-body">
+        <iframe id="pdf-overlay-frame" src="" frameborder="0" title="Policy document"></iframe>
+      </div>
+    </div>
+
+      <!-- BLUR OVERLAY -->
       <div id="blur-overlay">
         <div class="blur-message">
-          <span class="blur-icon">⚠️</span>
-          <p>Quiz Paused</p>
-          <small>Please return to the quiz window to continue</small>
+          <div class="blur-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+              <path d="M12 3L4 7.5V12c0 4.5 3.5 8 8 9 4.5-1 8-4.5 8-9V7.5L12 3Z"/>
+            </svg>
+          </div>
+          <p>Quiz paused</p>
+          <small>Return to this window to continue</small>
         </div>
       </div>
 

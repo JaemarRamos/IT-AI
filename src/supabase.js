@@ -5,14 +5,12 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-export async function uploadPolicy(file, moduleName, policyText) {
+export async function uploadPolicy(file, moduleName, policyText, moduleDesc = '') {
   const { data: existing } = await supabase
     .from('policies')
     .select('id, file_url')
     .eq('file_name', file.name)
-    .single()
-
-    console.log("Existing:", existing, "Error:", checkError)
+    .maybeSingle()
 
   if (existing) {
     const { error: updateError } = await supabase
@@ -20,12 +18,12 @@ export async function uploadPolicy(file, moduleName, policyText) {
       .update({
         module_name: moduleName,
         policy_text: policyText,
+        module_description: moduleDesc,
         is_active: true
       })
       .eq('id', existing.id)
 
     if (updateError) throw updateError
-
     return existing.file_url
   }
 
@@ -48,12 +46,12 @@ export async function uploadPolicy(file, moduleName, policyText) {
       file_url: urlData.publicUrl,
       module_name: moduleName,
       policy_text: policyText,
+      module_description: moduleDesc,
       uploaded_by: (await supabase.auth.getUser()).data.user?.email,
       is_active: true
     })
 
   if (dbError) throw dbError
-
   return urlData.publicUrl
 }
 

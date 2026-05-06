@@ -3,25 +3,25 @@ import { marked } from "marked"
 import DOMPurify from "dompurify"
 import { checkEnvironment } from "./utils.js"
 
-// ─── Auth check ───────────────────────────────────────────────
+
 if (!sessionStorage.getItem("loggedIn")) {
   window.location.href = "/login.html"
 }
 
 checkEnvironment()
 
-// ─── Admin flag ───────────────────────────────────────────────
+
 const currentUser = JSON.parse(sessionStorage.getItem("user") || "{}")
 const isAdmin = Boolean(currentUser?.email?.includes("admin"))
 
-// ─── AI client ────────────────────────────────────────────────
+
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_GROQ_API_KEY,
   baseURL: import.meta.env.VITE_GROQ_API_URL,
   dangerouslyAllowBrowser: true,
 })
 
-// ─── Built-in policy ──────────────────────────────────────────
+
 const IT_POLICY = `
 COMPANY IT POLICY - DO'S AND DON'TS
 
@@ -46,18 +46,18 @@ DON'TS:
 - Never store sensitive company data on personal devices or cloud storage
 `
 
-// ─── Constants ────────────────────────────────────────────────
-const TOTAL_QUESTIONS = 5   // change to 25 in production
+
+const TOTAL_QUESTIONS = 5   
 const IDLE_LIMIT      = 60000
 
-// ─── State ────────────────────────────────────────────────────
+
 let questionCount  = 0
 let score          = 0
 let quizStarted    = false
 let idleTimer      = null
 let currentPolicy  = IT_POLICY
 
-// ─── System prompt builder ────────────────────────────────────
+
 function buildSystemPrompt(policy) {
   return `You are an IT policy quiz assistant.
 
@@ -96,11 +96,11 @@ const messages = [
   { role: "system", content: buildSystemPrompt(currentPolicy) }
 ]
 
-// ─── Show admin link ──────────────────────────────────────────
+
 const adminLink = document.getElementById("admin-link")
 if (isAdmin) adminLink?.classList.remove("hidden")
 
-// ─── Blur on tab switch during quiz ──────────────────────────
+
 window.onblur = () => {
   const quizForm = document.getElementById("quiz-form")
   const overlay  = document.getElementById("blur-overlay")
@@ -112,10 +112,8 @@ window.onfocus = () => {
   if (overlay) overlay.style.cssText = "display:none;"
 }
 
-// ══════════════════════════════════════════════════════════════
 document.addEventListener("DOMContentLoaded", () => {
 
-  // ── DOM refs ────────────────────────────────────────────────
   const chat          = document.getElementById("chat")
   const userInput     = document.getElementById("user-input")
   const quizForm      = document.getElementById("quiz-form")
@@ -135,14 +133,49 @@ document.addEventListener("DOMContentLoaded", () => {
   const pdfFrame      = document.getElementById("pdf-frame")
   const acctChip      = document.getElementById("acct-chip")
   const acctDropdown  = document.getElementById("acct-dropdown")
+  const pdfOverlay = document.getElementById("pdf-overlay")
+  const pdfOverlayFrame = document.getElementById("pdf-overlay-frame")
+  const pdfOverlayTitle = document.getElementById("pdf-overlay-title")
+  const pdfBackBtn = document.getElementById("pdf-back-btn")
+  const pdfReadyBtn = document.getElementById("pdf-ready-btn")
+  const headerCenter = document.querySelector(".header-center")
 
-  // ── Admin gating ─────────────────────────────────────────────
-  // Hide upload button for non-admins
+  headerCenter.classList.add("hidden")
+
+function openPDFOverlay(url, moduleName) {
+  pdfOverlayFrame.src = url + "#toolbar=0"
+  pdfOverlayTitle.textContent = moduleName || "Policy Document"
+  pdfOverlay.classList.remove("hidden")
+  document.body.style.overflow = "hidden"
+}
+
+function closePDFOverlay() {
+  pdfOverlay.classList.add("hidden")
+  pdfOverlayFrame.src = ""
+  document.body.style.overflow = ""
+}
+
+pdfBackBtn.addEventListener("click", () => {
+  closePDFOverlay()
+})
+
+pdfReadyBtn.addEventListener("click", async () => {
+  closePDFOverlay()
+  chat.innerHTML = ""
+  readySection.classList.add("hidden")
+  quizForm.classList.remove("hidden")
+  questionCount = 0
+  quizStarted = true
+  headerCenter.classList.remove("hidden") 
+  await askITMS("I have read the policy and I am ready to start the quiz!")
+})
+
+
 if (!isAdmin && uploadDocBtn) {
     uploadDocBtn.style.display = "none"
   }
 
-  // Fill in account info if available
+  
   const ddEmail    = document.getElementById("dd-email")
   const ddFullname = document.getElementById("dd-fullname")
   const acctName   = document.querySelector(".acct-name")
@@ -159,7 +192,7 @@ if (!isAdmin && uploadDocBtn) {
     if (sbAvatar)  sbAvatar.textContent  = initials
   }
 
-  // ── Account dropdown ────────────────────────────────────────
+  
   acctChip?.addEventListener("click", () => {
     acctDropdown?.classList.toggle("hidden")
   })
@@ -174,7 +207,7 @@ if (!isAdmin && uploadDocBtn) {
     await logout()
   })
 
-  // ── Idle timer ───────────────────────────────────────────────
+  
   function resetIdleTimer() {
     clearTimeout(idleTimer)
     if (!quizStarted) return
@@ -183,12 +216,12 @@ if (!isAdmin && uploadDocBtn) {
     }, IDLE_LIMIT)
   }
 
-  // ── Trim messages ────────────────────────────────────────────
+ 
   function trimMessages() {
     if (messages.length > 7) messages.splice(1, messages.length - 7)
   }
 
-  // ── Add chat bubble ──────────────────────────────────────────
+  
   function addBubble(text, type) {
     const row    = document.createElement("div")
     row.className = `bubble-row ${type === "user" ? "user" : ""}`
@@ -219,7 +252,7 @@ if (!isAdmin && uploadDocBtn) {
     chat.scrollTop = chat.scrollHeight
   }
 
-  // ── Typing indicator ─────────────────────────────────────────
+  
   function addTypingIndicator() {
     const row      = document.createElement("div")
     row.className  = "bubble-row"
@@ -240,7 +273,7 @@ if (!isAdmin && uploadDocBtn) {
     document.getElementById("typing")?.remove()
   }
 
-  // ── Save result ──────────────────────────────────────────────
+  
   async function saveResult(passed) {
     try {
       const { saveQuizResult, supabase } = await import('./supabase.js')
@@ -260,20 +293,20 @@ if (!isAdmin && uploadDocBtn) {
     }
   }
 
-  // ── Reset quiz ───────────────────────────────────────────────
   function resetQuiz() {
     messages.length = 0
     messages.push({ role: "system", content: buildSystemPrompt(currentPolicy) })
-    questionCount   = 0
-    score           = 0
-    quizStarted     = false
-    progressFill.style.width  = "0%"
+    questionCount = 0
+    score = 0
+    quizStarted = false
+    progressFill.style.width = "0%"
     progressLabel.textContent = `Question 1 of ${TOTAL_QUESTIONS}`
-    scoreLabel.textContent    = "Score: 0"
-    chat.innerHTML            = ""
+    scoreLabel.textContent = "Score: 0"
+    chat.innerHTML = ""
+    headerCenter.classList.add("hidden") // ← hide when quiz resets
   }
 
-  // ── Handle AI reply ──────────────────────────────────────────
+
   function handleReply(reply) {
     messages.push({ role: "assistant", content: reply })
     removeTypingIndicator()
@@ -327,7 +360,6 @@ if (!isAdmin && uploadDocBtn) {
     }
   }
 
-  // ── Send to AI ───────────────────────────────────────────────
   async function askITMS(userMessage) {
     messages.push({ role: "user", content: userMessage })
     trimMessages()
@@ -371,11 +403,6 @@ if (!isAdmin && uploadDocBtn) {
     }
   }
 
-  // ── Add module card ──────────────────────────────────────────
-  // Builds a card that looks identical to the built-in module items.
-  // desc: short description shown under the name (like the placeholders).
-  // fileUrl: PDF url — PDF only opens when the card is clicked.
-  // adminOnly: if true, rename on dblclick is enabled.
   function addModuleToSidebar(name, desc, policyText, fileUrl) {
     const container = document.getElementById("uploaded-modules")
 
@@ -384,11 +411,11 @@ if (!isAdmin && uploadDocBtn) {
     item.dataset.policy   = policyText
     item.dataset.url      = fileUrl || ""
 
-    // ── dot ──
+   
     const dot = document.createElement("div")
     dot.className = "module-dot"
 
-    // ── info block ──
+   
     const info = document.createElement("div")
     info.className = "module-item-info"
 
@@ -403,12 +430,12 @@ if (!isAdmin && uploadDocBtn) {
     info.appendChild(nameSpan)
     info.appendChild(descSpan)
 
-    // ── badge ──
+
     const badge = document.createElement("span")
     badge.className   = "module-badge"
     badge.textContent = `${TOTAL_QUESTIONS} Q`
 
-    // ── Admin-only: rename on dblclick ──
+
     if (isAdmin) {
       nameSpan.title = "Double-click to rename"
       nameSpan.addEventListener("dblclick", (e) => {
@@ -430,7 +457,7 @@ if (!isAdmin && uploadDocBtn) {
         })
       })
 
-      // Admin-only: edit description on dblclick
+
       descSpan.title = "Double-click to edit description"
       descSpan.addEventListener("dblclick", (e) => {
         e.stopPropagation()
@@ -452,21 +479,18 @@ if (!isAdmin && uploadDocBtn) {
       })
     }
 
-    // ── Click: select module & open PDF ──
-    item.addEventListener("click", () => {
-      document.querySelectorAll(".module-item").forEach(i => i.classList.remove("active"))
-      item.classList.add("active")
-      currentPolicy = item.dataset.policy
-      resetQuiz()
+    
+item.addEventListener("click", () => {
+  document.querySelectorAll(".module-item").forEach(i => i.classList.remove("active"))
+  item.classList.add("active")
+  currentPolicy = item.dataset.policy
+  resetQuiz()
 
-      // Show PDF only when this card is explicitly clicked
-      if (item.dataset.url) {
-        pdfFrame.src = item.dataset.url + "#toolbar=0"
-        pdfViewer.classList.remove("hidden")
-      } else {
-        pdfViewer.classList.add("hidden")
-      }
-    })
+  if (item.dataset.url) {
+    openPDFOverlay(item.dataset.url, nameSpan.textContent)
+  }
+})
+
 
     item.appendChild(dot)
     item.appendChild(info)
@@ -474,7 +498,7 @@ if (!isAdmin && uploadDocBtn) {
     container.appendChild(item)
   }
 
-  // ── Load modules from Supabase ───────────────────────────────
+  
   async function loadExistingModules() {
     try {
       const { supabase } = await import('./supabase.js')
@@ -501,7 +525,7 @@ if (!isAdmin && uploadDocBtn) {
     }
   }
 
-  // ── Mark passed modules green ────────────────────────────────
+  
   async function markPassedModules() {
     try {
       const { getPassedModules } = await import('./supabase.js')
@@ -519,11 +543,6 @@ if (!isAdmin && uploadDocBtn) {
     }
   }
 
-  // ══════════════════════════════════════════════════════════════
-  // EVENT LISTENERS
-  // ══════════════════════════════════════════════════════════════
-
-  // Prevent copy/paste in textarea
   userInput.addEventListener("copy",    (e) => e.preventDefault())
   userInput.addEventListener("paste",   (e) => e.preventDefault())
   userInput.addEventListener("cut",     (e) => e.preventDefault())
@@ -531,29 +550,29 @@ if (!isAdmin && uploadDocBtn) {
   userInput.addEventListener("click",   resetIdleTimer)
   document.addEventListener("mousemove", resetIdleTimer)
 
-  // Built-in module cards — click to select (PDF only if data-url set)
+
   document.querySelectorAll(".module-item[data-module-name]").forEach(item => {
     item.addEventListener("click", () => {
       document.querySelectorAll(".module-item").forEach(i => i.classList.remove("active"))
       item.classList.add("active")
-      currentPolicy = IT_POLICY  // built-in cards always use the default policy
-      pdfViewer.classList.add("hidden")  // built-in cards have no PDF
+      currentPolicy = IT_POLICY  
+      pdfViewer.classList.add("hidden")  
       resetQuiz()
     })
   })
 
-  // Ready button
   readyBtn.addEventListener("click", async () => {
     chat.innerHTML = ""
     readySection.classList.add("hidden")
     quizForm.classList.remove("hidden")
     questionCount = 0
-    quizStarted   = true
-    pdfViewer.classList.add("hidden")
+    quizStarted = true
+    headerCenter.classList.remove("hidden") 
+    pdfViewer?.classList.add("hidden")
     await askITMS("I have read the policy and I am ready to start the quiz!")
   })
 
-  // Submit answer
+  
   quizForm.addEventListener("submit", async (e) => {
     e.preventDefault()
     const userMessage = userInput.value.trim()
@@ -584,7 +603,7 @@ if (!isAdmin && uploadDocBtn) {
     document.getElementById("submit-btn").disabled = false
   })
 
-  // Restart button
+  
   restartBtn.addEventListener("click", () => {
     restartBtn.textContent = "Start over"
     restartBtn.onclick = null
@@ -602,7 +621,7 @@ if (!isAdmin && uploadDocBtn) {
   })
 
   uploadDocBtn?.addEventListener("click", () => {
-    if (!isAdmin) return   // extra guard
+    if (!isAdmin) return   
 
     const fileInput  = document.createElement("input")
     fileInput.type   = "file"
@@ -646,11 +665,10 @@ if (!isAdmin && uploadDocBtn) {
 
         currentPolicy = policyText
         resetQuiz()
-        // Do NOT auto-open PDF — it will open when the user clicks the card
         addModuleToSidebar(moduleName, moduleDesc, policyText, fileUrl)
 
       } catch (err) {
-        console.error(err)
+        console.error("Full error:", JSON.stringify(err)) 
         addBubble("❌ Failed to upload PDF. Please try again.", "genie")
       }
     })
@@ -658,11 +676,6 @@ if (!isAdmin && uploadDocBtn) {
 
   const firstModule = document.querySelector(".module-item")
   if (firstModule) firstModule.classList.add("active")
-
-  addBubble(
-    "👋 Welcome! Select a module from the list, then click <strong>I'm ready — start the quiz</strong> to begin.",
-    "genie"
-  )
 
   loadExistingModules()
 })
