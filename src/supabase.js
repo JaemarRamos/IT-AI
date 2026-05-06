@@ -138,3 +138,34 @@ export async function logout() {
   sessionStorage.removeItem("user")
   window.location.href = "/login.html"
 }
+
+export async function getAllQuizResults() {
+  const { data, error } = await supabase
+    .from('quiz_results')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+export async function getAllProfiles() {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+  return data
+}
+
+export async function getAllPolicies() {
+  const { data, error } = await supabase
+    .from('policies')
+    .select('*')
+    .eq('is_active', true)
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+  return data
+}
