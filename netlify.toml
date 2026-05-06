@@ -5,8 +5,23 @@
 [[redirects]]
   from = "/"
   to = "/login.html"
-  status = 302
-  conditions = {}
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/index.html"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/login.html"
+  to = "/login.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin.html"
+  to = "/admin.html"
+  status = 200
 
 [[redirects]]
   from = "/*"
