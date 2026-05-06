@@ -2,7 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <script src="/src/auth.js"></script>
+    <script>
+    if (!sessionStorage.getItem("loggedIn")) {
+      window.location.replace("/login.html");
+    }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ITMS — IT Security Training</title>
     <link rel="stylesheet" href="src/style.css" />
