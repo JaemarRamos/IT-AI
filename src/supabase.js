@@ -132,3 +132,11 @@ export async function getPassedModules() {
   if (error) return []
   return data.map(r => r.module_name)
 }
+
+export async function logout() {
+  await supabase.auth.signOut()
+  sessionStorage.removeItem("loggedIn")
+  sessionStorage.removeItem("employeeId")
+  sessionStorage.removeItem("user")
+  window.location.href = "/login.html"
+}
